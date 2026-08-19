@@ -8,9 +8,9 @@ export interface LangSeo {
 
 export const site = {
   name: 'Bách Thảo Ngân Tuyên Quang',
-  flipbooks: {
-    vi: 'https://heyzine.com/flip-book/4545e51740.html',
-    en: 'https://heyzine.com/flip-book/d9ee7d176e.html',
+  pdf: {
+    vi: '/pdf/catalog-vi.pdf',
+    en: '/pdf/catalog-en.pdf',
   },
   ogImage: 'https://bachthaongan.com.vn/wp-content/uploads/2026/07/toan-canh-bach-thao-ngan-1024x576.jpg',
   favicon:

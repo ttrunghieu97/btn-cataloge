@@ -1,0 +1,220 @@
+---
+interface Props {
+  pdfUrlVi: string;
+  pdfUrlEn: string;
+  initialLang?: 'vi' | 'en';
+}
+
+const { pdfUrlVi, pdfUrlEn, initialLang = 'vi' } = Astro.props;
+const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
+---
+
+<div class="pdf-viewer-root" id="pdfViewerRoot" data-pdf-vi={pdfUrlVi} data-pdf-en={pdfUrlEn} data-lang={initialLang}>
+  <!-- Top PDF Utilities Bar -->
+  <div class="pdf-toolbar">
+    <div class="pdf-info">
+      <span class="pdf-badge">PDF</span>
+      <span class="pdf-filename" id="pdfTitle">
+        {initialLang === 'vi' ? 'Catalog Bách Thảo Ngân (Tiếng Việt)' : 'Bach Thao Ngan Catalog (English)'}
+      </span>
+    </div>
+
+    <div class="pdf-actions">
+      <a href={currentPdf} target="_blank" rel="noopener noreferrer" class="action-btn" id="btnOpenNewTab" title="Mở trong tab mới">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        <span class="btn-text">Mở tab mới</span>
+      </a>
+
+      <a href={currentPdf} download={initialLang === 'vi' ? 'Catalog-Bach-Thao-Ngan-VI.pdf' : 'Catalog-Bach-Thao-Ngan-EN.pdf'} class="action-btn download-btn" id="btnDownloadPdf" title="Tải file PDF về máy">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span class="btn-text">Tải PDF</span>
+      </a>
+
+      <button class="action-btn" id="btnFullscreen" title="Toàn màn hình">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- PDF Display Container (Vertical Continuous Scroll) -->
+  <div class="pdf-container" id="pdfContainer">
+    <iframe
+      id="pdfIframe"
+      src={`${currentPdf}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`}
+      title="Bách Thảo Ngân Catalog PDF"
+      type="application/pdf"
+    ></iframe>
+  </div>
+</div>
+
+<script>
+  const root = document.getElementById('pdfViewerRoot');
+  const pdfIframe = document.getElementById('pdfIframe') as HTMLIFrameElement;
+  const pdfTitle = document.getElementById('pdfTitle');
+  const btnOpenNewTab = document.getElementById('btnOpenNewTab') as HTMLAnchorElement;
+  const btnDownloadPdf = document.getElementById('btnDownloadPdf') as HTMLAnchorElement;
+  const btnFullscreen = document.getElementById('btnFullscreen');
+  const container = document.getElementById('pdfContainer');
+
+  const pdfUrlVi = root?.getAttribute('data-pdf-vi') || '/pdf/catalog-vi.pdf';
+  const pdfUrlEn = root?.getAttribute('data-pdf-en') || '/pdf/catalog-en.pdf';
+
+  function updatePdfView(lang: string) {
+    const isEn = lang === 'en';
+    const activeUrl = isEn ? pdfUrlEn : pdfUrlVi;
+
+    if (pdfIframe) {
+      pdfIframe.src = `${activeUrl}#toolbar=1&navpanes=0&scrollbar=1&view=FitH`;
+    }
+
+    if (pdfTitle) {
+      pdfTitle.textContent = isEn ? 'Bach Thao Ngan Catalog (English)' : 'Catalog Bách Thảo Ngân (Tiếng Việt)';
+    }
+
+    if (btnOpenNewTab) {
+      btnOpenNewTab.href = activeUrl;
+    }
+
+    if (btnDownloadPdf) {
+      btnDownloadPdf.href = activeUrl;
+      btnDownloadPdf.download = isEn ? 'Catalog-Bach-Thao-Ngan-EN.pdf' : 'Catalog-Bach-Thao-Ngan-VI.pdf';
+    }
+  }
+
+  // Fullscreen
+  btnFullscreen?.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      container?.requestFullscreen().catch(err => console.error(err));
+    } else {
+      document.exitFullscreen();
+    }
+  });
+
+  // Listen language switch from Header
+  window.addEventListener('catalog-lang-change', (event: any) => {
+    const lang = event.detail.lang;
+    updatePdfView(lang);
+  });
+</script>
+
+<style>
+  .pdf-viewer-root {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #1e293b;
+  }
+
+  /* Toolbar */
+  .pdf-toolbar {
+    background-color: #0f172a;
+    border-bottom: 1px solid #334155;
+    padding: 0.5rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 44px;
+    z-index: 10;
+  }
+
+  .pdf-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pdf-badge {
+    background: #cba051;
+    color: #071c25;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .pdf-filename {
+    color: #f1f5f9;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .pdf-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .action-btn {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #f1f5f9;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .action-btn:hover {
+    background: #334155;
+    border-color: #64748b;
+    color: #ffffff;
+  }
+
+  .download-btn {
+    background: rgba(203, 160, 81, 0.15);
+    border-color: rgba(203, 160, 81, 0.4);
+    color: #cba051;
+  }
+
+  .download-btn:hover {
+    background: #cba051;
+    color: #071c25;
+  }
+
+  /* PDF Container */
+  .pdf-container {
+    width: 100%;
+    flex: 1;
+    min-height: calc(100vh - 124px);
+    height: 88vh;
+    position: relative;
+    background-color: #334155;
+  }
+
+  .pdf-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  @media (max-width: 640px) {
+    .btn-text {
+      display: none;
+    }
+
+    .pdf-toolbar {
+      padding: 0.4rem 0.75rem;
+    }
+
+    .action-btn {
+      padding: 0.35rem 0.5rem;
+    }
+
+    .pdf-container {
+      min-height: calc(100vh - 110px);
+      height: 82vh;
+    }
+  }
+</style>
