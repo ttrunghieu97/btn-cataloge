@@ -1,0 +1,230 @@
+---
+import Header from './Header.astro';
+import Footer from './Footer.astro';
+
+interface Props {
+  lang: 'vi' | 'en';
+  flipbookUrl: string;
+  pageTitle: string;
+  pageDesc: string;
+  ogLocale: string;
+}
+
+const { lang, flipbookUrl, pageTitle, pageDesc, ogLocale } = Astro.props;
+
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const alternateUrl = new URL(lang === 'vi' ? 'en/' : '', Astro.site).toString();
+const defaultUrl = new URL('', Astro.site).toString();
+
+const ogImage = "https://bachthaongan.com.vn/wp-content/uploads/2026/07/toan-canh-bach-thao-ngan-1024x576.jpg";
+
+const cfAnalyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDesc} />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="alternate" hreflang="vi" href={defaultUrl} />
+    <link rel="alternate" hreflang="en" href={alternateUrl} />
+    <link rel="alternate" hreflang="x-default" href={defaultUrl} />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:locale" content={ogLocale} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDesc} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:site_name" content="Bách Thảo Ngân" />
+    <meta property="og:image" content={ogImage} />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={pageDesc} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <!-- Favicons -->
+    <link rel="icon" href="https://bachthaongan.com.vn/wp-content/uploads/2025/09/cropped-870f64d6-efa7-40b0-8fb7-e1e767478610-scaled-1-32x32.png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="https://bachthaongan.com.vn/wp-content/uploads/2025/09/cropped-870f64d6-efa7-40b0-8fb7-e1e767478610-scaled-1-180x180.png" />
+
+    <!-- Tối ưu kết nối Heyzine & Fonts -->
+    <link rel="preconnect" href="https://heyzine.com" crossorigin />
+    <link rel="preconnect" href="https://cdnc.heyzine.com" crossorigin />
+    <link rel="dns-prefetch" href="https://heyzine.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
+
+    {lang === 'vi' && (
+      <script is:inline>
+        new URLSearchParams(location.search).get('lang') === 'en' && location.replace('/en/');
+      </script>
+    )}
+
+    {cfAnalyticsToken && (
+      <script is:inline defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={`{"token":"${cfAnalyticsToken}"}`}></script>
+    )}
+
+    <!-- Schema.org Structured Data (JSON-LD) -->
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "TouristAttraction",
+      "name": "Bách Thảo Ngân Tuyên Quang",
+      "description": pageDesc,
+      "url": canonicalUrl,
+      "image": ogImage,
+      "telephone": "0327.326.326",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "465 đường Lê Duẩn, Tổ dân phố Tân Hà 32, Phường Minh Xuân",
+        "addressLocality": "Tuyên Quang",
+        "addressCountry": "VN"
+      }
+    })} />
+  </head>
+  <body>
+    <Header lang={lang} />
+
+    <main class="main-content">
+      <div class="viewer-container">
+        <!-- Loading Skeleton -->
+        <div class="viewer-skeleton" id="viewerSkeleton" aria-hidden="true">
+          <div class="spinner"></div>
+          <p>Đang tải Catalog...</p>
+        </div>
+
+        <iframe
+          class="flipbook-frame active"
+          src={flipbookUrl}
+          title={lang === 'vi' ? "Catalog Bách Thảo Ngân (Tiếng Việt)" : "Catalog Bách Thảo Ngân (English)"}
+          allow="clipboard-write; fullscreen"
+          allowfullscreen="allowfullscreen"
+        ></iframe>
+      </div>
+    </main>
+
+    <Footer />
+
+    <script>
+      const frame = document.querySelector<HTMLIFrameElement>('.flipbook-frame');
+      const skeleton = document.getElementById('viewerSkeleton');
+
+      function hideSkeleton() {
+        if (skeleton) {
+          skeleton.style.opacity = '0';
+          setTimeout(() => {
+            skeleton.style.display = 'none';
+          }, 300);
+        }
+      }
+
+      if (frame) {
+        frame.addEventListener('load', hideSkeleton);
+        setTimeout(hideSkeleton, 2500);
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    --primary: #cba051;
+    --primary-hover: #b88d3e;
+    --navy-dark: #1a354f;
+    --navy-deep: #071c25;
+    --text-dark: #1a354f;
+    --bg-light: #f8fafc;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: "Quicksand", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-weight: 500;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .main-content {
+    flex: 1;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .viewer-container {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: calc(100vh - 80px);
+    height: 90vh;
+    border-radius: 0;
+    overflow: hidden;
+    background: #000;
+    box-shadow: none;
+  }
+
+  .viewer-skeleton {
+    position: absolute;
+    inset: 0;
+    background: #0f172a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    z-index: 5;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(203, 160, 81, 0.2);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .flipbook-frame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  @media (max-width: 640px) {
+    .viewer-container {
+      min-height: calc(100vh - 70px);
+      height: 85vh;
+    }
+  }
+</style>
