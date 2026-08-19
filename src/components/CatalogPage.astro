@@ -1,24 +1,62 @@
 ---
 import Header from './Header.astro';
 import Footer from './Footer.astro';
+import { site } from '../config/seo';
 
 interface Props {
   lang: 'vi' | 'en';
-  flipbookUrl: string;
-  pageTitle: string;
-  pageDesc: string;
-  ogLocale: string;
 }
 
-const { lang, flipbookUrl, pageTitle, pageDesc, ogLocale } = Astro.props;
+const { lang } = Astro.props;
+const seo = site.seo[lang];
+const flipbookUrl = site.flipbooks[lang];
 
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site).toString();
 const alternateUrl = new URL(lang === 'vi' ? 'en/' : '', Astro.site).toString();
 const defaultUrl = new URL('', Astro.site).toString();
 
-const ogImage = "https://bachthaongan.com.vn/wp-content/uploads/2026/07/toan-canh-bach-thao-ngan-1024x576.jpg";
-
 const cfAnalyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
+
+const structuredData = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      name: site.name,
+      url: defaultUrl,
+      inLanguage: lang,
+      publisher: { '@type': 'Organization', name: site.name, url: defaultUrl },
+    },
+    {
+      '@type': 'Organization',
+      name: site.name,
+      url: defaultUrl,
+      telephone: site.phone,
+      email: site.email,
+      logo: site.appleTouchIcon,
+      address: { '@type': 'PostalAddress', ...site.address },
+      sameAs: [site.social.facebook],
+    },
+    {
+      '@type': 'TouristAttraction',
+      name: site.name,
+      description: seo.pageDesc,
+      url: canonicalUrl,
+      image: site.ogImage,
+      telephone: site.phone,
+      address: { '@type': 'PostalAddress', ...site.address },
+      sameAs: [site.social.facebook],
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: seo.faqs.map((f) => ({
+        '@type': 'Question',
+        name: f.question,
+        acceptedAnswer: { '@type': 'Answer', text: f.answer },
+      })),
+    },
+  ],
+});
 ---
 
 <!doctype html>
@@ -26,8 +64,9 @@ const cfAnalyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{pageTitle}</title>
-    <meta name="description" content={pageDesc} />
+    <title>{seo.pageTitle}</title>
+    <meta name="description" content={seo.pageDesc} />
+    <meta name="keywords" content={seo.keywords.join(', ')} />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
     <link rel="canonical" href={canonicalUrl} />
     <link rel="alternate" hreflang="vi" href={defaultUrl} />
@@ -35,23 +74,23 @@ const cfAnalyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
     <link rel="alternate" hreflang="x-default" href={defaultUrl} />
 
     <!-- Open Graph / Facebook -->
-    <meta property="og:locale" content={ogLocale} />
+    <meta property="og:locale" content={seo.ogLocale} />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content={pageTitle} />
-    <meta property="og:description" content={pageDesc} />
+    <meta property="og:title" content={seo.pageTitle} />
+    <meta property="og:description" content={seo.pageDesc} />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:site_name" content="Bách Thảo Ngân" />
-    <meta property="og:image" content={ogImage} />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:image" content={site.ogImage} />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={pageTitle} />
-    <meta name="twitter:description" content={pageDesc} />
-    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:title" content={seo.pageTitle} />
+    <meta name="twitter:description" content={seo.pageDesc} />
+    <meta name="twitter:image" content={site.ogImage} />
 
     <!-- Favicons -->
-    <link rel="icon" href="https://bachthaongan.com.vn/wp-content/uploads/2025/09/cropped-870f64d6-efa7-40b0-8fb7-e1e767478610-scaled-1-32x32.png" sizes="32x32" />
-    <link rel="apple-touch-icon" href="https://bachthaongan.com.vn/wp-content/uploads/2025/09/cropped-870f64d6-efa7-40b0-8fb7-e1e767478610-scaled-1-180x180.png" />
+    <link rel="icon" href={site.favicon} sizes="32x32" />
+    <link rel="apple-touch-icon" href={site.appleTouchIcon} />
 
     <!-- Tối ưu kết nối Heyzine & Fonts -->
     <link rel="preconnect" href="https://heyzine.com" crossorigin />
@@ -72,21 +111,7 @@ const cfAnalyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
     )}
 
     <!-- Schema.org Structured Data (JSON-LD) -->
-    <script is:inline type="application/ld+json" set:html={JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "TouristAttraction",
-      "name": "Bách Thảo Ngân Tuyên Quang",
-      "description": pageDesc,
-      "url": canonicalUrl,
-      "image": ogImage,
-      "telephone": "0327.326.326",
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": "465 đường Lê Duẩn, Tổ dân phố Tân Hà 32, Phường Minh Xuân",
-        "addressLocality": "Tuyên Quang",
-        "addressCountry": "VN"
-      }
-    })} />
+    <script is:inline type="application/ld+json" set:html={structuredData}></script>
   </head>
   <body>
     <Header lang={lang} />
@@ -107,6 +132,25 @@ const cfAnalyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
           allowfullscreen="allowfullscreen"
         ></iframe>
       </div>
+
+      <section class="seo-content">
+        <div class="seo-container">
+          <h1>{seo.introHeading}</h1>
+          {seo.intro.map((paragraph) => (
+            <p>{paragraph}</p>
+          ))}
+
+          <h2>{seo.faqHeading}</h2>
+          <div class="faq-list">
+            {seo.faqs.map((faq) => (
+              <details class="faq-item">
+                <summary>{faq.question}</summary>
+                <p>{faq.answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
     </main>
 
     <Footer />
@@ -221,10 +265,101 @@ const cfAnalyticsToken = import.meta.env.PUBLIC_CF_ANALYTICS_TOKEN;
     border: 0;
   }
 
+  .seo-content {
+    background: var(--bg-light);
+    padding: 3rem 1.5rem;
+  }
+
+  .seo-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .seo-container h1 {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--navy-dark);
+    line-height: 1.3;
+    margin-bottom: 1rem;
+  }
+
+  .seo-container h2 {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--navy-dark);
+    margin: 2.5rem 0 1rem;
+  }
+
+  .seo-container > p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #475569;
+    margin-bottom: 1rem;
+  }
+
+  .faq-list {
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .faq-item {
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .faq-item summary {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--navy-dark);
+    padding: 1rem 0;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-item summary::after {
+    content: '+';
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+    transition: transform 0.2s ease;
+  }
+
+  .faq-item[open] summary::after {
+    content: '−';
+  }
+
+  .faq-item[open] summary {
+    color: var(--primary-hover);
+  }
+
+  .faq-item p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #475569;
+    padding: 0 0 1.25rem;
+  }
+
   @media (max-width: 640px) {
     .viewer-container {
       min-height: calc(100vh - 70px);
       height: 85vh;
+    }
+
+    .seo-content {
+      padding: 2rem 1.25rem;
+    }
+
+    .seo-container h1 {
+      font-size: 1.4rem;
     }
   }
 </style>
