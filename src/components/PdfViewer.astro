@@ -95,7 +95,16 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
   let pageObserver: IntersectionObserver | null = null;
   let scrollObserver: IntersectionObserver | null = null;
   const renderedPages = new Set<number>();
-  const pageViewports: Map<number, pdfjsLib.PageViewport> = new Map();
+
+  function getTargetWidth(): number {
+    const isMobile = window.innerWidth <= 640;
+    const vpWidth = scrollViewport ? scrollViewport.clientWidth : window.innerWidth;
+    const padding = isMobile ? 16 : 40;
+    const available = vpWidth - padding;
+    // On mobile, take 100% of available width; on desktop max 960px
+    const baseWidth = isMobile ? available : Math.min(available, 960);
+    return Math.max(baseWidth, 300) * currentScale;
+  }
 
   async function loadAndRenderPdf(url: string) {
     if (loader) {
@@ -109,7 +118,6 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
     if (pageObserver) pageObserver.disconnect();
     if (scrollObserver) scrollObserver.disconnect();
     renderedPages.clear();
-    pageViewports.clear();
     if (pagesStack) pagesStack.innerHTML = '';
 
     try {
@@ -131,14 +139,13 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
       const numPages = pdfDoc.numPages;
       if (totalPageNum) totalPageNum.textContent = String(numPages);
       if (progressBar) progressBar.style.width = '95%';
-      if (loaderText) loaderText.textContent = 'Đang chuẩn bị trang...';
+      if (loaderText) loaderText.textContent = 'Đang dựng trang...';
 
       // Setup page placeholders
       const firstPage = await pdfDoc.getPage(1);
       const sampleVp = firstPage.getViewport({ scale: 1 });
       const aspectRatio = sampleVp.height / sampleVp.width;
-
-      const containerWidth = scrollViewport ? Math.min(scrollViewport.clientWidth - 24, 1000) : 800;
+      const targetW = getTargetWidth();
 
       // Create page wrapper elements
       for (let i = 1; i <= numPages; i++) {
@@ -146,12 +153,13 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
         pageBox.className = 'pdf-page-card';
         pageBox.id = `page-card-${i}`;
         pageBox.dataset.pageNumber = String(i);
-        pageBox.style.maxWidth = `${containerWidth}px`;
-        pageBox.style.minHeight = `${containerWidth * aspectRatio}px`;
+        pageBox.style.width = `${targetW}px`;
+        pageBox.style.maxWidth = '100%';
+        pageBox.style.minHeight = `${targetW * aspectRatio}px`;
 
         const placeholder = document.createElement('div');
         placeholder.className = 'page-skeleton';
-        placeholder.innerHTML = `<span class="page-num-tag">Trang ${i}</span>`;
+        placeholder.innerHTML = `<span class="page-num-tag">Trang ${i} / ${numPages}</span>`;
         pageBox.appendChild(placeholder);
 
         pagesStack?.appendChild(pageBox);
@@ -169,11 +177,11 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
         });
       }, {
         root: scrollViewport,
-        rootMargin: '400px 0px 400px 0px',
+        rootMargin: '600px 0px 600px 0px',
         threshold: 0.01,
       });
 
-      // IntersectionObserver for current page tracking in floating pill
+      // IntersectionObserver for current page tracking
       scrollObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
@@ -185,8 +193,8 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
         });
       }, {
         root: scrollViewport,
-        rootMargin: '-30% 0px -30% 0px',
-        threshold: 0.1,
+        rootMargin: '-35% 0px -35% 0px',
+        threshold: 0.05,
       });
 
       document.querySelectorAll('.pdf-page-card').forEach((el) => {
@@ -208,7 +216,7 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
       }
     } catch (err) {
       console.error('Error rendering PDF:', err);
-      if (loaderText) loaderText.textContent = 'Không thể tải PDF. Vui lòng tải lại trang.';
+      if (loaderText) loaderText.textContent = 'Không thể tải PDF. Vui lòng thử lại.';
     }
   }
 
@@ -223,19 +231,19 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
       const page = await pdfDoc.getPage(pageNum);
       const baseViewport = page.getViewport({ scale: 1 });
       
-      const targetWidth = card.clientWidth || (scrollViewport ? Math.min(scrollViewport.clientWidth - 24, 1000) : 800);
-      const scale = (targetWidth / baseViewport.width) * currentScale;
+      const targetW = getTargetWidth();
+      const scale = targetW / baseViewport.width;
       const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
 
       const renderViewport = page.getViewport({ scale: scale * dpr });
-      const displayViewport = page.getViewport({ scale: scale });
+      const displayHeight = (targetW / baseViewport.width) * baseViewport.height;
 
       const canvas = document.createElement('canvas');
       canvas.className = 'page-canvas';
       canvas.width = renderViewport.width;
       canvas.height = renderViewport.height;
-      canvas.style.width = `${displayViewport.width}px`;
-      canvas.style.height = `${displayViewport.height}px`;
+      canvas.style.width = '100%';
+      canvas.style.height = `${displayHeight}px`;
 
       const ctx = canvas.getContext('2d');
       if (ctx) {
@@ -245,7 +253,7 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
         }).promise;
       }
 
-      // Remove skeleton & insert canvas
+      // Replace placeholder with rendered canvas
       card.innerHTML = '';
       card.style.minHeight = 'auto';
       card.appendChild(canvas);
@@ -257,16 +265,16 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
 
   // Zoom Handling
   function updateZoom(newScale: number) {
-    currentScale = Math.max(0.6, Math.min(newScale, 2.2));
+    currentScale = Math.max(0.6, Math.min(newScale, 2.0));
     if (zoomLevel) zoomLevel.textContent = `${Math.round(currentScale * 100)}%`;
     
-    // Re-render visible pages with new scale
-    renderedPages.clear();
-    const containerWidth = scrollViewport ? Math.min(scrollViewport.clientWidth - 24, 1000) * currentScale : 800;
+    const targetW = getTargetWidth();
     document.querySelectorAll<HTMLElement>('.pdf-page-card').forEach((card) => {
-      card.style.maxWidth = `${containerWidth}px`;
+      card.style.width = `${targetW}px`;
     });
 
+    // Re-render visible pages
+    renderedPages.clear();
     document.querySelectorAll<HTMLElement>('.pdf-page-card').forEach((card) => {
       const pageNum = Number(card.dataset.pageNumber);
       renderSinglePage(pageNum);
@@ -283,6 +291,23 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
     } else {
       document.exitFullscreen();
     }
+  });
+
+  // Handle Window Resize
+  let resizeTimeout: any = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      const targetW = getTargetWidth();
+      document.querySelectorAll<HTMLElement>('.pdf-page-card').forEach((card) => {
+        card.style.width = `${targetW}px`;
+      });
+      renderedPages.clear();
+      document.querySelectorAll<HTMLElement>('.pdf-page-card').forEach((card) => {
+        const pageNum = Number(card.dataset.pageNumber);
+        renderSinglePage(pageNum);
+      });
+    }, 200);
   });
 
   // Language switch
@@ -465,14 +490,15 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
-    padding: 1.5rem 0.5rem 4rem;
+    padding: 1rem 0.5rem 4rem;
   }
 
   .pdf-pages-stack {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5rem;
+    width: 100%;
+    gap: 1.25rem;
     margin: 0 auto;
   }
 
@@ -480,16 +506,18 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
     width: 100%;
     display: flex;
     justify-content: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-    border-radius: 4px;
+    align-items: center;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    border-radius: 6px;
     overflow: hidden;
     background: #ffffff;
-    transition: max-width 0.2s ease;
+    margin: 0 auto;
   }
 
   .page-skeleton {
     width: 100%;
     height: 100%;
+    min-height: 400px;
     background: #1e293b;
     display: flex;
     align-items: center;
@@ -501,15 +529,18 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
   }
 
   .page-num-tag {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 4px 10px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 6px 14px;
     border-radius: 20px;
+    color: #94a3b8;
   }
 
   :global(.page-canvas) {
     display: block;
-    max-width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
     height: auto !important;
+    border-radius: 4px;
   }
 
   /* Floating Page Pill */
@@ -546,7 +577,7 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
     }
 
     .pdf-scroll-viewport {
-      padding: 0.75rem 0.25rem 3rem;
+      padding: 0.5rem 0.25rem 3rem;
       height: calc(100vh - 110px);
     }
 
