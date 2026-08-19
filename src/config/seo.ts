@@ -12,6 +12,10 @@ export const site = {
     vi: '/pdf/catalog-vi.pdf',
     en: '/pdf/catalog-en.pdf',
   },
+  flipbooks: {
+    vi: 'https://heyzine.com/flip-book/4545e51740.html',
+    en: 'https://heyzine.com/flip-book/0af751ff71.html',
+  },
   ogImage: 'https://bachthaongan.com.vn/wp-content/uploads/2026/07/toan-canh-bach-thao-ngan-1024x576.jpg',
   favicon:
     'https://bachthaongan.com.vn/wp-content/uploads/2025/09/cropped-870f64d6-efa7-40b0-8fb7-e1e767478610-scaled-1-32x32.png',
