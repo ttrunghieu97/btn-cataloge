@@ -5,7 +5,7 @@ interface Props {
 
 const { lang = 'vi' } = Astro.props;
 
-const menuItems = [
+const menuItemsVi = [
   { label: "Trang chủ", href: "https://bachthaongan.com.vn/" },
   { label: "Giới thiệu", href: "https://bachthaongan.com.vn/gioi-thieu/" },
   {
@@ -35,6 +35,38 @@ const menuItems = [
   { label: "Cẩm nang du lịch", href: "https://bachthaongan.com.vn/cam-nang-du-lich/" },
   { label: "Liên hệ", href: "https://bachthaongan.com.vn/lien-he/" }
 ];
+
+const menuItemsEn = [
+  { label: "Home", href: "https://bachthaongan.com.vn/" },
+  { label: "About", href: "https://bachthaongan.com.vn/gioi-thieu/" },
+  {
+    label: "Services",
+    href: "https://bachthaongan.com.vn/luu-tru/",
+    children: [
+      { label: "Accommodation", href: "https://bachthaongan.com.vn/luu-tru/" },
+      { label: "Event Center & Weddings", href: "https://bachthaongan.com.vn/trung-tam-su-kien-tiec-cuoi/" },
+      { label: "Dining & Restaurant", href: "https://bachthaongan.com.vn/am-thuc-2/" },
+      { label: "Entertainment & Sports", href: "https://bachthaongan.com.vn/ve-giai-tri-the-thao/" },
+      { label: "Camping", href: "https://bachthaongan.com.vn/camping-2/" }
+    ]
+  },
+  {
+    label: "News",
+    href: "https://bachthaongan.com.vn/tin-tuc/",
+    children: [
+      { label: "Featured News & Events", href: "https://bachthaongan.com.vn/tin-tuc-su-kien-noi-bat/" },
+      { label: "Customer Reviews", href: "https://bachthaongan.com.vn/review-trai-nghiem-khach-hang/" },
+      { label: "Community Activities", href: "https://bachthaongan.com.vn/hoat-dong-cong-dong/" },
+      { label: "Promotions & Hot Combos", href: "https://bachthaongan.com.vn/uu-dai-combo-hot/" }
+    ]
+  },
+  { label: "Catalog", href: "/en/", active: true },
+  { label: "Gallery", href: "https://bachthaongan.com.vn/thu-vien-anh/" },
+  { label: "Travel Guide", href: "https://bachthaongan.com.vn/cam-nang-du-lich/" },
+  { label: "Contact", href: "https://bachthaongan.com.vn/lien-he/" }
+];
+
+const menuItems = lang === 'en' ? menuItemsEn : menuItemsVi;
 ---
 
 <header class="site-header">

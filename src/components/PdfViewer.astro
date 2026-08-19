@@ -6,334 +6,165 @@ interface Props {
 }
 
 const { pdfUrlVi, pdfUrlEn, initialLang = 'vi' } = Astro.props;
-const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
+const totalPages = 18;
+const pages = Array.from({ length: totalPages }, (_, i) => {
+  const num = String(i + 1).padStart(2, '0');
+  return {
+    num: i + 1,
+    viSrc: `/catalog/vi/page-${num}.webp`,
+    enSrc: `/catalog/en/page-${num}.webp`,
+  };
+});
 ---
 
-<div class="pdf-viewer-root" id="pdfViewerRoot" data-pdf-vi={pdfUrlVi} data-pdf-en={pdfUrlEn} data-lang={initialLang}>
+<div class="pdf-viewer-root" id="pdfViewerRoot" data-lang={initialLang} data-pdf-vi={pdfUrlVi} data-pdf-en={pdfUrlEn}>
   <!-- Top Utility Bar -->
   <div class="pdf-toolbar">
-    <div class="pdf-info">
-      <span class="pdf-badge">PDF</span>
-      <span class="pdf-filename" id="pdfTitle">
-        {initialLang === 'vi' ? 'Catalog Bách Thảo Ngân (Tiếng Việt)' : 'Bach Thao Ngan Catalog (English)'}
-      </span>
-    </div>
+    <div class="toolbar-inner">
+      <div class="pdf-info">
+        <span class="pdf-badge">PDF</span>
+        <span class="pdf-filename" id="pdfTitle">
+          {initialLang === 'vi' ? 'Bách Thảo Ngân Catalog' : 'Bach Thao Ngan Catalog'}
+        </span>
+      </div>
 
-    <div class="pdf-actions">
-      <a href={initialLang === 'en' ? '/flipbook/en/' : '/flipbook/'} class="action-btn mode-btn" title="Chuyển sang chế độ lật trang 3D (Heyzine)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        <span class="btn-text">Lật Trang 3D</span>
-      </a>
+      <div class="pdf-actions">
+        <button class="action-btn" id="btnZoomOut" title="Thu nhỏ (-)" aria-label="Thu nhỏ">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
 
-      <a href={currentPdf} download={initialLang === 'vi' ? 'Catalog-Bach-Thao-Ngan-VI.pdf' : 'Catalog-Bach-Thao-Ngan-EN.pdf'} class="action-btn download-btn" id="btnDownloadPdf" title="Tải file PDF về máy">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        <span class="btn-text">Tải PDF</span>
-      </a>
+        <button class="action-btn" id="btnZoomIn" title="Phóng to (+)" aria-label="Phóng to">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
 
-      <button class="action-btn" id="btnZoomOut" title="Thu nhỏ (-)" aria-label="Thu nhỏ">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-      </button>
-
-      <span class="zoom-level" id="zoomLevel">100%</span>
-
-      <button class="action-btn" id="btnZoomIn" title="Phóng to (+)" aria-label="Phóng to">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-      </button>
-
-      <button class="action-btn" id="btnFullscreen" title="Toàn màn hình" aria-label="Toàn màn hình">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-      </button>
+        <button class="action-btn" id="btnFullscreen" title="Toàn màn hình (F)" aria-label="Toàn màn hình">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Loading State -->
-  <div class="pdf-loader" id="pdfLoader">
-    <div class="loader-spinner"></div>
-    <div class="loader-text" id="loaderText">Đang tải Catalog PDF...</div>
-    <div class="progress-bar-wrap">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
-  </div>
-
-  <!-- Continuous Vertical Scroll Container -->
+  <!-- Continuous Vertical Pages Stream (Instant Loading) -->
   <div class="pdf-scroll-viewport" id="pdfScrollViewport">
-    <div class="pdf-pages-stack" id="pdfPagesStack"></div>
+    <div class="pdf-pages-stack" id="pdfPagesStack">
+      {pages.map((p) => (
+        <div class="pdf-page-card" id={`page-card-${p.num}`} data-page-number={p.num}>
+          <img
+            class="catalog-page-img"
+            src={initialLang === 'vi' ? p.viSrc : p.enSrc}
+            data-vi-src={p.viSrc}
+            data-en-src={p.enSrc}
+            alt={`Trang ${p.num} - Bách Thảo Ngân Catalog`}
+            loading={p.num <= 2 ? 'eager' : 'lazy'}
+            fetchpriority={p.num === 1 ? 'high' : 'auto'}
+            decoding={p.num === 1 ? 'sync' : 'async'}
+            width="1200"
+            height="675"
+          />
+        </div>
+      ))}
+    </div>
   </div>
 
-  <!-- Floating Page Indicator Pill -->
-  <div class="floating-page-pill" id="floatingPagePill">
-    Trang <span id="curPageNum">1</span> / <span id="totalPageNum">--</span>
-  </div>
+  <!-- Interactive Floating Page Pill (Click to Scroll to Top) -->
+  <button class="floating-page-pill" id="floatingPagePill" title="Bấm để cuộn lên đầu trang" aria-label="Cuộn lên đầu trang">
+    <span>Trang <strong id="curPageNum">1</strong> / {totalPages}</span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 15l-6-6-6 6"/></svg>
+  </button>
 </div>
 
 <script>
-  import * as pdfjsLib from 'pdfjs-dist';
-
-  pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-
   const root = document.getElementById('pdfViewerRoot');
-  const loader = document.getElementById('pdfLoader');
-  const loaderText = document.getElementById('loaderText');
-  const progressBar = document.getElementById('progressBar');
-  const pagesStack = document.getElementById('pdfPagesStack');
   const scrollViewport = document.getElementById('pdfScrollViewport');
   const curPageNum = document.getElementById('curPageNum');
-  const totalPageNum = document.getElementById('totalPageNum');
   const pdfTitle = document.getElementById('pdfTitle');
-  const btnDownloadPdf = document.getElementById('btnDownloadPdf') as HTMLAnchorElement;
   const btnZoomIn = document.getElementById('btnZoomIn');
   const btnZoomOut = document.getElementById('btnZoomOut');
-  const zoomLevel = document.getElementById('zoomLevel');
   const btnFullscreen = document.getElementById('btnFullscreen');
-
-  const pdfUrlVi = root?.getAttribute('data-pdf-vi') || '/pdf/catalog-vi.pdf';
-  const pdfUrlEn = root?.getAttribute('data-pdf-en') || '/pdf/catalog-en.pdf';
-  let activeLang = root?.getAttribute('data-lang') || 'vi';
+  const pagePill = document.getElementById('floatingPagePill');
+  const pageImages = document.querySelectorAll<HTMLImageElement>('.catalog-page-img');
+  const pageCards = document.querySelectorAll<HTMLElement>('.pdf-page-card');
 
   let currentScale = 1.0;
-  let pdfDoc: pdfjsLib.PDFDocumentProxy | null = null;
-  let pageObserver: IntersectionObserver | null = null;
-  let scrollObserver: IntersectionObserver | null = null;
-  const renderedPages = new Set<number>();
 
-  function getTargetWidth(): number {
-    const isMobile = window.innerWidth <= 640;
-    const vpWidth = scrollViewport ? scrollViewport.clientWidth : window.innerWidth;
-    const padding = isMobile ? 16 : 40;
-    const available = vpWidth - padding;
-    // On mobile, take 100% of available width; on desktop max 960px
-    const baseWidth = isMobile ? available : Math.min(available, 960);
-    return Math.max(baseWidth, 300) * currentScale;
-  }
-
-  async function loadAndRenderPdf(url: string) {
-    if (loader) {
-      loader.style.display = 'flex';
-      loader.style.opacity = '1';
-    }
-    if (progressBar) progressBar.style.width = '15%';
-    if (loaderText) loaderText.textContent = 'Đang tải tài liệu PDF...';
-
-    // Cleanup previous
-    if (pageObserver) pageObserver.disconnect();
-    if (scrollObserver) scrollObserver.disconnect();
-    renderedPages.clear();
-    if (pagesStack) pagesStack.innerHTML = '';
-
-    try {
-      const loadingTask = pdfjsLib.getDocument({
-        url,
-        cMapUrl: 'https://unpkg.com/pdfjs-dist@4.10.38/cmaps/',
-        cMapPacked: true,
-      });
-
-      loadingTask.onProgress = (p) => {
-        if (p.total > 0 && progressBar) {
-          const pct = Math.min(Math.round((p.loaded / p.total) * 100), 90);
-          progressBar.style.width = `${pct}%`;
-          if (loaderText) loaderText.textContent = `Đang tải: ${pct}%`;
+  // Track current visible page
+  if (scrollViewport) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const pageNum = (entry.target as HTMLElement).dataset.pageNumber;
+          if (curPageNum && pageNum) {
+            curPageNum.textContent = pageNum;
+          }
         }
-      };
-
-      pdfDoc = await loadingTask.promise;
-      const numPages = pdfDoc.numPages;
-      if (totalPageNum) totalPageNum.textContent = String(numPages);
-      if (progressBar) progressBar.style.width = '95%';
-      if (loaderText) loaderText.textContent = 'Đang dựng trang...';
-
-      // Setup page placeholders
-      const firstPage = await pdfDoc.getPage(1);
-      const sampleVp = firstPage.getViewport({ scale: 1 });
-      const aspectRatio = sampleVp.height / sampleVp.width;
-      const targetW = getTargetWidth();
-
-      // Create page wrapper elements
-      for (let i = 1; i <= numPages; i++) {
-        const pageBox = document.createElement('div');
-        pageBox.className = 'pdf-page-card';
-        pageBox.id = `page-card-${i}`;
-        pageBox.dataset.pageNumber = String(i);
-        pageBox.style.width = `${targetW}px`;
-        pageBox.style.maxWidth = '100%';
-        pageBox.style.minHeight = `${targetW * aspectRatio}px`;
-
-        const placeholder = document.createElement('div');
-        placeholder.className = 'page-skeleton';
-        placeholder.innerHTML = `<span class="page-num-tag">Trang ${i} / ${numPages}</span>`;
-        pageBox.appendChild(placeholder);
-
-        pagesStack?.appendChild(pageBox);
-      }
-
-      // IntersectionObserver for lazy rendering
-      pageObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const pageNum = Number((entry.target as HTMLElement).dataset.pageNumber);
-            if (!renderedPages.has(pageNum)) {
-              renderSinglePage(pageNum);
-            }
-          }
-        });
-      }, {
-        root: scrollViewport,
-        rootMargin: '600px 0px 600px 0px',
-        threshold: 0.01,
       });
+    }, {
+      root: scrollViewport,
+      rootMargin: '-35% 0px -35% 0px',
+      threshold: 0.05,
+    });
 
-      // IntersectionObserver for current page tracking
-      scrollObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const pageNum = (entry.target as HTMLElement).dataset.pageNumber;
-            if (curPageNum && pageNum) {
-              curPageNum.textContent = pageNum;
-            }
-          }
-        });
-      }, {
-        root: scrollViewport,
-        rootMargin: '-35% 0px -35% 0px',
-        threshold: 0.05,
-      });
-
-      document.querySelectorAll('.pdf-page-card').forEach((el) => {
-        pageObserver?.observe(el);
-        scrollObserver?.observe(el);
-      });
-
-      // Render page 1 and 2 immediately
-      await renderSinglePage(1);
-      if (numPages >= 2) await renderSinglePage(2);
-
-      // Hide loader
-      if (progressBar) progressBar.style.width = '100%';
-      if (loader) {
-        loader.style.opacity = '0';
-        setTimeout(() => {
-          loader.style.display = 'none';
-        }, 250);
-      }
-    } catch (err) {
-      console.error('Error rendering PDF:', err);
-      if (loaderText) loaderText.textContent = 'Không thể tải PDF. Vui lòng thử lại.';
-    }
+    pageCards.forEach((card) => observer.observe(card));
   }
 
-  async function renderSinglePage(pageNum: number) {
-    if (!pdfDoc || renderedPages.has(pageNum)) return;
-    renderedPages.add(pageNum);
-
-    const card = document.getElementById(`page-card-${pageNum}`);
-    if (!card) return;
-
-    try {
-      const page = await pdfDoc.getPage(pageNum);
-      const baseViewport = page.getViewport({ scale: 1 });
-      
-      const targetW = getTargetWidth();
-      const scale = targetW / baseViewport.width;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-
-      const renderViewport = page.getViewport({ scale: scale * dpr });
-      const displayHeight = (targetW / baseViewport.width) * baseViewport.height;
-
-      const canvas = document.createElement('canvas');
-      canvas.className = 'page-canvas';
-      canvas.width = renderViewport.width;
-      canvas.height = renderViewport.height;
-      canvas.style.width = '100%';
-      canvas.style.height = `${displayHeight}px`;
-
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        await page.render({
-          canvasContext: ctx,
-          viewport: renderViewport,
-        }).promise;
-      }
-
-      // Replace placeholder with rendered canvas
-      card.innerHTML = '';
-      card.style.minHeight = 'auto';
-      card.appendChild(canvas);
-    } catch (e) {
-      console.error(`Error rendering page ${pageNum}:`, e);
-      renderedPages.delete(pageNum);
-    }
-  }
+  // Smooth click scroll to top
+  pagePill?.addEventListener('click', () => {
+    scrollViewport?.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 
   // Zoom Handling
   function updateZoom(newScale: number) {
-    currentScale = Math.max(0.6, Math.min(newScale, 2.0));
-    if (zoomLevel) zoomLevel.textContent = `${Math.round(currentScale * 100)}%`;
+    currentScale = Math.max(0.7, Math.min(newScale, 1.8));
     
-    const targetW = getTargetWidth();
-    document.querySelectorAll<HTMLElement>('.pdf-page-card').forEach((card) => {
-      card.style.width = `${targetW}px`;
-    });
+    const isMobile = window.innerWidth <= 640;
+    const baseWidth = isMobile ? window.innerWidth - 16 : 1140;
+    const targetWidth = baseWidth * currentScale;
 
-    // Re-render visible pages
-    renderedPages.clear();
-    document.querySelectorAll<HTMLElement>('.pdf-page-card').forEach((card) => {
-      const pageNum = Number(card.dataset.pageNumber);
-      renderSinglePage(pageNum);
+    pageCards.forEach((card) => {
+      card.style.maxWidth = `${targetWidth}px`;
     });
   }
 
   btnZoomIn?.addEventListener('click', () => updateZoom(currentScale + 0.15));
   btnZoomOut?.addEventListener('click', () => updateZoom(currentScale - 0.15));
 
+  // Keyboard Navigation & Shortcuts
+  window.addEventListener('keydown', (e) => {
+    if (e.key === '+' || e.key === '=') updateZoom(currentScale + 0.15);
+    if (e.key === '-' || e.key === '_') updateZoom(currentScale - 0.15);
+    if (e.key === '0') updateZoom(1.0);
+    if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+  });
+
   // Fullscreen
-  btnFullscreen?.addEventListener('click', () => {
+  function toggleFullscreen() {
     if (!document.fullscreenElement) {
       root?.requestFullscreen().catch(err => console.error(err));
     } else {
       document.exitFullscreen();
     }
-  });
+  }
 
-  // Handle Window Resize
-  let resizeTimeout: any = null;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      const targetW = getTargetWidth();
-      document.querySelectorAll<HTMLElement>('.pdf-page-card').forEach((card) => {
-        card.style.width = `${targetW}px`;
-      });
-      renderedPages.clear();
-      document.querySelectorAll<HTMLElement>('.pdf-page-card').forEach((card) => {
-        const pageNum = Number(card.dataset.pageNumber);
-        renderSinglePage(pageNum);
-      });
-    }, 200);
-  });
+  btnFullscreen?.addEventListener('click', toggleFullscreen);
 
-  // Language switch
+  // Language Switch
   function setLanguage(lang: string) {
-    activeLang = lang;
     const isEn = lang === 'en';
-    const targetUrl = isEn ? pdfUrlEn : pdfUrlVi;
-
     if (pdfTitle) {
-      pdfTitle.textContent = isEn ? 'Bach Thao Ngan Catalog (English)' : 'Catalog Bách Thảo Ngân (Tiếng Việt)';
-    }
-    if (btnDownloadPdf) {
-      btnDownloadPdf.href = targetUrl;
-      btnDownloadPdf.download = isEn ? 'Catalog-Bach-Thao-Ngan-EN.pdf' : 'Catalog-Bach-Thao-Ngan-VI.pdf';
+      pdfTitle.textContent = isEn ? 'Bach Thao Ngan Catalog' : 'Bách Thảo Ngân Catalog';
     }
 
-    loadAndRenderPdf(targetUrl);
+    pageImages.forEach((img) => {
+      const targetSrc = isEn ? img.getAttribute('data-en-src') : img.getAttribute('data-vi-src');
+      if (targetSrc && img.src !== targetSrc) {
+        img.src = targetSrc;
+      }
+    });
   }
 
   window.addEventListener('catalog-lang-change', (event: any) => {
     setLanguage(event.detail.lang);
   });
-
-  // Initial load
-  const initialTarget = activeLang === 'en' ? pdfUrlEn : pdfUrlVi;
-  loadAndRenderPdf(initialTarget);
 </script>
 
 <style>
@@ -342,28 +173,33 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
     flex: 1;
     display: flex;
     flex-direction: column;
-    background-color: #0f172a;
+    background-color: #071c25;
     position: relative;
     overflow: hidden;
   }
 
-  /* Toolbar */
+  /* Toolbar Container aligned to content width */
   .pdf-toolbar {
-    background-color: #1e293b;
-    border-bottom: 1px solid #334155;
-    padding: 0.5rem 1.25rem;
+    background-color: #0b1e2c;
+    border-bottom: 1px solid rgba(203, 160, 81, 0.2);
+    padding: 0.45rem 1rem;
+    z-index: 20;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  }
+
+  .toolbar-inner {
+    max-width: 1140px;
+    margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    min-height: 48px;
-    z-index: 20;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    min-height: 38px;
   }
 
   .pdf-info {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
   }
 
   .pdf-badge {
@@ -371,7 +207,7 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
     color: #071c25;
     font-size: 0.7rem;
     font-weight: 800;
-    padding: 2px 6px;
+    padding: 2px 7px;
     border-radius: 4px;
     letter-spacing: 0.5px;
   }
@@ -379,8 +215,8 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
   .pdf-filename {
     color: #f1f5f9;
     font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 0.875rem;
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 700;
   }
 
   .pdf-actions {
@@ -390,107 +226,40 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
   }
 
   .action-btn {
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: rgba(26, 53, 79, 0.7);
+    border: 1px solid rgba(203, 160, 81, 0.3);
     color: #f1f5f9;
-    padding: 0.4rem 0.75rem;
+    width: 34px;
+    height: 34px;
     border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-decoration: none;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
   }
 
   .action-btn:hover {
-    background: #334155;
-    border-color: #cba051;
-    color: #cba051;
-  }
-
-  .download-btn {
-    background: rgba(203, 160, 81, 0.15);
-    border-color: rgba(203, 160, 81, 0.4);
-    color: #cba051;
-  }
-
-  .download-btn:hover {
     background: #cba051;
+    border-color: #cba051;
     color: #071c25;
+    transform: translateY(-1px);
   }
 
-  .zoom-level {
-    color: #cbd5e1;
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 0.8rem;
-    font-weight: 600;
-    min-width: 44px;
-    text-align: center;
-  }
-
-  /* Loader */
-  .pdf-loader {
-    position: absolute;
-    inset: 48px 0 0 0;
-    background: #0f172a;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    z-index: 30;
-    transition: opacity 0.3s ease;
-  }
-
-  .loader-spinner {
-    width: 42px;
-    height: 42px;
-    border: 3px solid rgba(203, 160, 81, 0.2);
-    border-top-color: #cba051;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  .loader-text {
-    color: #e2e8f0;
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 0.9rem;
-    font-weight: 600;
-  }
-
-  .progress-bar-wrap {
-    width: 220px;
-    height: 6px;
-    background: #1e293b;
-    border-radius: 3px;
-    overflow: hidden;
-  }
-
-  .progress-bar {
-    height: 100%;
-    width: 15%;
-    background: linear-gradient(90deg, #cba051, #e6c687);
-    border-radius: 3px;
-    transition: width 0.2s ease;
+  .action-btn:active {
+    transform: translateY(0);
   }
 
   /* Scroll Viewport */
   .pdf-scroll-viewport {
     flex: 1;
     width: 100%;
-    height: calc(100vh - 128px);
+    height: calc(100vh - 118px);
     overflow-y: auto;
-    overflow-x: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
-    padding: 1rem 0.5rem 4rem;
+    padding: 1.5rem 0.5rem 4.5rem;
   }
 
   .pdf-pages-stack {
@@ -498,87 +267,83 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
     flex-direction: column;
     align-items: center;
     width: 100%;
-    gap: 1.25rem;
+    gap: 1.5rem;
     margin: 0 auto;
   }
 
   .pdf-page-card {
     width: 100%;
+    max-width: 1140px;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-    border-radius: 6px;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75);
+    border-radius: 8px;
     overflow: hidden;
     background: #ffffff;
     margin: 0 auto;
+    transition: max-width 0.2s ease;
   }
 
-  .page-skeleton {
+  .catalog-page-img {
+    display: block;
     width: 100%;
-    height: 100%;
-    min-height: 400px;
-    background: #1e293b;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #64748b;
+    height: auto;
+    object-fit: contain;
+    background-color: #071c25;
+  }
+
+  /* Interactive Floating Page Pill */
+  .floating-page-pill {
+    position: absolute;
+    bottom: 24px;
+    right: 28px;
+    background: rgba(7, 28, 37, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #ffffff;
+    border: 1px solid rgba(203, 160, 81, 0.5);
+    border-radius: 22px;
+    padding: 6px 16px;
     font-family: "Plus Jakarta Sans", sans-serif;
     font-size: 0.85rem;
     font-weight: 600;
-  }
-
-  .page-num-tag {
-    background: rgba(0, 0, 0, 0.4);
-    padding: 6px 14px;
-    border-radius: 20px;
-    color: #94a3b8;
-  }
-
-  :global(.page-canvas) {
-    display: block;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    border-radius: 4px;
-  }
-
-  /* Floating Page Pill */
-  .floating-page-pill {
-    position: absolute;
-    bottom: 20px;
-    right: 24px;
-    background: rgba(15, 23, 42, 0.85);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    color: #ffffff;
-    border: 1px solid rgba(203, 160, 81, 0.4);
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-family: "Plus Jakarta Sans", sans-serif;
-    font-size: 0.85rem;
-    font-weight: 700;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
     z-index: 25;
-    pointer-events: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .floating-page-pill strong {
+    color: #cba051;
+  }
+
+  .floating-page-pill:hover {
+    background: #1a354f;
+    border-color: #cba051;
+    transform: translateY(-2px);
   }
 
   @media (max-width: 640px) {
-    .btn-text, .zoom-level {
-      display: none;
-    }
-
     .pdf-toolbar {
       padding: 0.4rem 0.75rem;
     }
 
+    .pdf-filename {
+      font-size: 0.8rem;
+    }
+
     .action-btn {
-      padding: 0.35rem 0.5rem;
+      width: 30px;
+      height: 30px;
     }
 
     .pdf-scroll-viewport {
-      padding: 0.5rem 0.25rem 3rem;
-      height: calc(100vh - 110px);
+      padding: 0.75rem 0.25rem 3.5rem;
+      height: calc(100vh - 100px);
     }
 
     .pdf-pages-stack {
@@ -588,7 +353,7 @@ const currentPdf = initialLang === 'en' ? pdfUrlEn : pdfUrlVi;
     .floating-page-pill {
       bottom: 12px;
       right: 12px;
-      padding: 4px 10px;
+      padding: 5px 12px;
       font-size: 0.75rem;
     }
   }
