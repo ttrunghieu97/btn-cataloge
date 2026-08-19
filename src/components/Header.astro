@@ -51,52 +51,52 @@ const menuItems = [
       />
     </a>
 
-    <!-- Mobile Menu Toggle Button -->
-    <button class="mobile-toggle" id="mobileMenuBtn" aria-label="Mở menu">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-
-    <!-- Desktop Navigation -->
-    <nav class="nav-menu" id="navMenu">
-      <ul class="nav-list">
-        {menuItems.map((item) => (
-          <li class={`nav-item ${item.children ? 'has-dropdown' : ''} ${item.active ? 'active' : ''}`}>
-            <a href={item.href} class="nav-link">
-              {item.label}
+    <div class="header-right">
+      <!-- Desktop Navigation -->
+      <nav class="nav-menu" id="navMenu">
+        <ul class="nav-list">
+          {menuItems.map((item) => (
+            <li class={`nav-item ${item.children ? 'has-dropdown' : ''} ${item.active ? 'active' : ''}`}>
+              <a href={item.href} class="nav-link">
+                {item.label}
+                {item.children && (
+                  <svg class="chevron-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                    <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                  </svg>
+                )}
+              </a>
               {item.children && (
-                <svg class="chevron-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                  <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-                </svg>
+                <ul class="dropdown-menu">
+                  {item.children.map((child) => (
+                    <li>
+                      <a href={child.href} class="dropdown-link">{child.label}</a>
+                    </li>
+                  ))}
+                </ul>
               )}
-            </a>
-            {item.children && (
-              <ul class="dropdown-menu">
-                {item.children.map((child) => (
-                  <li>
-                    <a href={child.href} class="dropdown-link">{child.label}</a>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
+            </li>
+          ))}
+        </ul>
+      </nav>
 
-        <!-- Language Switcher in Nav -->
-        <li class="nav-item lang-selector">
-          <div class="lang-switch-group" role="group" aria-label="Ngôn ngữ">
-            <a class={`lang-btn ${lang === 'vi' ? 'active' : ''}`} href="/" lang="vi" title="Tiếng Việt">
-              <span class="flag">🇻🇳</span> VI
-            </a>
-            <span class="lang-divider">/</span>
-            <a class={`lang-btn ${lang === 'en' ? 'active' : ''}`} href="/en/" lang="en" title="English">
-              <span class="flag">🇬🇧</span> EN
-            </a>
-          </div>
-        </li>
-      </ul>
-    </nav>
+      <!-- Language Switcher (Visible on both desktop & mobile) -->
+      <div class="lang-switch-group" role="group" aria-label="Ngôn ngữ">
+        <a class={`lang-btn ${lang === 'vi' ? 'active' : ''}`} href="/" lang="vi" title="Tiếng Việt">
+          <span class="flag">🇻🇳</span> VI
+        </a>
+        <span class="lang-divider">/</span>
+        <a class={`lang-btn ${lang === 'en' ? 'active' : ''}`} href="/en/" lang="en" title="English">
+          <span class="flag">🇬🇧</span> EN
+        </a>
+      </div>
+
+      <!-- Mobile Menu Toggle Button -->
+      <button class="mobile-toggle" id="mobileMenuBtn" aria-label="Mở menu" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -129,6 +129,7 @@ const menuItems = [
   if (btn && nav) {
     const setOpen = (open: boolean) => {
       nav.classList.toggle('is-open', open);
+      btn.classList.toggle('is-active', open);
       btn.setAttribute('aria-expanded', String(open));
       btn.setAttribute('aria-label', open ? 'Đóng menu' : 'Mở menu');
     };
@@ -174,6 +175,7 @@ const menuItems = [
     justify-content: space-between;
     height: 80px;
     min-height: 80px;
+    position: relative;
     transition: height 0.2s ease, min-height 0.2s ease;
   }
 
@@ -185,6 +187,7 @@ const menuItems = [
   .logo-link {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
   }
 
   .logo-img {
@@ -196,6 +199,12 @@ const menuItems = [
 
   .site-header.is-scrolled .logo-img {
     height: 26px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
   }
 
   .nav-menu {
@@ -301,6 +310,7 @@ const menuItems = [
     padding: 2px 6px;
     gap: 4px;
     transition: all 0.2s ease;
+    flex-shrink: 0;
   }
 
   .site-header.is-scrolled .lang-switch-group {
@@ -347,20 +357,34 @@ const menuItems = [
   .mobile-toggle {
     display: none;
     flex-direction: column;
-    justify-content: space-around;
-    width: 30px;
-    height: 24px;
+    justify-content: space-between;
+    width: 28px;
+    height: 20px;
     background: transparent;
     border: none;
     cursor: pointer;
     padding: 0;
+    flex-shrink: 0;
   }
 
   .mobile-toggle span {
     width: 100%;
-    height: 3px;
+    height: 2.5px;
     background: #ffffff;
     border-radius: 2px;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+  }
+
+  .mobile-toggle.is-active span:nth-child(1) {
+    transform: translateY(8.5px) rotate(45deg);
+  }
+
+  .mobile-toggle.is-active span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .mobile-toggle.is-active span:nth-child(3) {
+    transform: translateY(-8.5px) rotate(-45deg);
   }
 
   a:focus-visible,
@@ -370,6 +394,14 @@ const menuItems = [
   }
 
   @media (max-width: 1024px) {
+    .header-container {
+      padding: 0 1rem;
+    }
+
+    .header-right {
+      gap: 0.75rem;
+    }
+
     .mobile-toggle {
       display: flex;
     }
@@ -379,10 +411,16 @@ const menuItems = [
       top: 100%;
       left: 0;
       width: 100%;
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
       background: #1a354f;
       display: none;
       border-top: 1px solid rgba(255,255,255,0.1);
       box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+
+    .site-header.is-scrolled .nav-menu {
+      max-height: calc(100vh - 38px);
     }
 
     .nav-menu.is-open {
@@ -393,13 +431,19 @@ const menuItems = [
       flex-direction: column;
       align-items: stretch;
       gap: 0;
-      padding: 1rem 0;
+      padding: 0.5rem 0;
     }
 
     .nav-link {
-      padding: 0.75rem 1.5rem;
+      padding: 0.75rem 1.25rem;
       width: 100%;
       justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .site-header.is-scrolled .nav-link {
+      line-height: normal;
+      padding: 0.75rem 1.25rem;
     }
 
     .dropdown-menu {
@@ -408,13 +452,15 @@ const menuItems = [
       visibility: visible;
       transform: none;
       box-shadow: none;
-      background: rgba(0,0,0,0.15);
+      background: rgba(0,0,0,0.2);
       border-top: none;
-      padding-left: 1rem;
+      border-radius: 0;
+      padding: 0;
     }
 
-    .lang-selector {
-      padding: 0.75rem 1.5rem;
+    .dropdown-link {
+      padding: 0.65rem 1.25rem 0.65rem 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     }
   }
 </style>
