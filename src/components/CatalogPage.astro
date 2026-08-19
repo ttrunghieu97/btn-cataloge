@@ -1,6 +1,7 @@
 ---
 import Header from './Header.astro';
 import Footer from './Footer.astro';
+import PdfFlipbook from './PdfFlipbook.astro';
 import { site } from '../config/seo';
 
 interface Props {
@@ -9,7 +10,6 @@ interface Props {
 
 const { lang } = Astro.props;
 const seo = site.seo[lang];
-const flipbookUrl = site.flipbooks[lang];
 
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site).toString();
 const alternateUrl = new URL(lang === 'vi' ? 'en/' : '', Astro.site).toString();
@@ -84,10 +84,7 @@ const structuredData = JSON.stringify({
     <link rel="icon" href={site.favicon} sizes="32x32" />
     <link rel="apple-touch-icon" href={site.appleTouchIcon} />
 
-    <!-- Tối ưu kết nối Heyzine & Fonts -->
-    <link rel="preconnect" href="https://heyzine.com" crossorigin />
-    <link rel="preconnect" href="https://cdnc.heyzine.com" crossorigin />
-    <link rel="dns-prefetch" href="https://heyzine.com" />
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet" />
@@ -109,43 +106,14 @@ const structuredData = JSON.stringify({
     <Header lang={lang} />
 
     <main class="main-content">
-      <div class="viewer-container">
-        <!-- Loading Skeleton -->
-        <div class="viewer-skeleton" id="viewerSkeleton" aria-hidden="true">
-          <div class="spinner"></div>
-          <p>Đang tải Catalog...</p>
-        </div>
-
-        <iframe
-          class="flipbook-frame active"
-          src={flipbookUrl}
-          title={lang === 'vi' ? "Catalog Bách Thảo Ngân (Tiếng Việt)" : "Catalog Bách Thảo Ngân (English)"}
-          allow="clipboard-write; fullscreen"
-          allowfullscreen="allowfullscreen"
-        ></iframe>
-      </div>
+      <PdfFlipbook
+        pdfUrlVi={site.pdf.vi}
+        pdfUrlEn={site.pdf.en}
+        initialLang={lang}
+      />
     </main>
 
     <Footer />
-
-    <script>
-      const frame = document.querySelector<HTMLIFrameElement>('.flipbook-frame');
-      const skeleton = document.getElementById('viewerSkeleton');
-
-      function hideSkeleton() {
-        if (skeleton) {
-          skeleton.style.opacity = '0';
-          setTimeout(() => {
-            skeleton.style.display = 'none';
-          }, 300);
-        }
-      }
-
-      if (frame) {
-        frame.addEventListener('load', hideSkeleton);
-        setTimeout(hideSkeleton, 2500);
-      }
-    </script>
   </body>
 </html>
 
@@ -184,64 +152,5 @@ const structuredData = JSON.stringify({
     padding: 0;
     display: flex;
     flex-direction: column;
-  }
-
-  .viewer-container {
-    position: relative;
-    width: 100%;
-    flex: 1;
-    min-height: calc(100vh - 80px);
-    height: 90vh;
-    border-radius: 0;
-    overflow: hidden;
-    background: #000;
-    box-shadow: none;
-  }
-
-  .viewer-skeleton {
-    position: absolute;
-    inset: 0;
-    background: #0f172a;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    color: #94a3b8;
-    font-size: 0.9rem;
-    z-index: 5;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-  }
-
-  .spinner {
-    width: 36px;
-    height: 36px;
-    border: 3px solid rgba(203, 160, 81, 0.2);
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .flipbook-frame {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border: 0;
-  }
-
-  @media (max-width: 640px) {
-    .viewer-container {
-      min-height: calc(100vh - 70px);
-      height: 85vh;
-    }
   }
 </style>

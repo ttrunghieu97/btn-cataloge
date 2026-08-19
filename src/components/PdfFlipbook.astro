@@ -1,0 +1,461 @@
+---
+interface Props {
+  pdfUrlVi: string;
+  pdfUrlEn: string;
+  initialLang?: 'vi' | 'en';
+}
+
+const { pdfUrlVi, pdfUrlEn, initialLang = 'vi' } = Astro.props;
+---
+
+<div class="flipbook-root" id="flipbookRoot" data-pdf-vi={pdfUrlVi} data-pdf-en={pdfUrlEn} data-lang={initialLang}>
+  <!-- Loading & Progress Screen -->
+  <div class="flipbook-loader" id="flipbookLoader">
+    <div class="loader-spinner"></div>
+    <div class="loader-text" id="loaderText">Đang chuẩn bị Catalog...</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+  </div>
+
+  <!-- Book Container -->
+  <div class="flipbook-viewport" id="flipbookViewport">
+    <div class="flipbook-container" id="flipbookContainer">
+      <div id="book" class="book-pages"></div>
+    </div>
+  </div>
+
+  <!-- Flipbook Floating Navigation Bar -->
+  <div class="flipbook-controls">
+    <button class="control-btn" id="btnPrev" title="Trang trước (←)" aria-label="Trang trước">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+
+    <div class="page-indicator" id="pageIndicator">
+      <span id="currentPage">1</span> / <span id="totalPages">--</span>
+    </div>
+
+    <button class="control-btn" id="btnNext" title="Trang tiếp theo (→)" aria-label="Trang tiếp theo">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+
+    <div class="control-divider"></div>
+
+    <button class="control-btn" id="btnZoomOut" title="Thu nhỏ (-)" aria-label="Thu nhỏ">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+
+    <button class="control-btn" id="btnZoomIn" title="Phóng to (+)" aria-label="Phóng to">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+
+    <div class="control-divider"></div>
+
+    <a href={pdfUrlVi} download="Catalog-Bach-Thao-Ngan.pdf" class="control-btn download-btn" id="btnDownload" title="Tải xuống PDF" aria-label="Tải xuống PDF">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span class="btn-label">Tải PDF</span>
+    </a>
+
+    <button class="control-btn" id="btnFullscreen" title="Toàn màn hình (F)" aria-label="Toàn màn hình">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  import * as pdfjsLib from 'pdfjs-dist';
+  import { PageFlip } from 'page-flip';
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+
+  const root = document.getElementById('flipbookRoot');
+  const loader = document.getElementById('flipbookLoader');
+  const loaderText = document.getElementById('loaderText');
+  const progressBar = document.getElementById('progressBar');
+  const bookContainer = document.getElementById('book');
+  const currentPageEl = document.getElementById('currentPage');
+  const totalPagesEl = document.getElementById('totalPages');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const btnZoomIn = document.getElementById('btnZoomIn');
+  const btnZoomOut = document.getElementById('btnZoomOut');
+  const btnDownload = document.getElementById('btnDownload') as HTMLAnchorElement;
+  const btnFullscreen = document.getElementById('btnFullscreen');
+  const viewport = document.getElementById('flipbookViewport');
+
+  let pageFlipInstance: PageFlip | null = null;
+  let currentZoom = 1;
+  let isRendering = false;
+
+  const pdfUrlVi = root?.getAttribute('data-pdf-vi') || '/pdf/catalog-vi.pdf';
+  const pdfUrlEn = root?.getAttribute('data-pdf-en') || '/pdf/catalog-en.pdf';
+  let activeLang = root?.getAttribute('data-lang') || 'vi';
+
+  async function loadPdfAndRenderBook(url: string) {
+    if (isRendering) return;
+    isRendering = true;
+
+    // Reset UI
+    if (loader) {
+      loader.style.display = 'flex';
+      loader.style.opacity = '1';
+    }
+    if (progressBar) progressBar.style.width = '10%';
+    if (loaderText) loaderText.textContent = 'Đang tải tệp PDF...';
+
+    // Destroy previous instance
+    if (pageFlipInstance) {
+      try {
+        pageFlipInstance.destroy();
+      } catch (e) {}
+      pageFlipInstance = null;
+    }
+    if (bookContainer) {
+      bookContainer.innerHTML = '';
+    }
+
+    try {
+      const loadingTask = pdfjsLib.getDocument({
+        url,
+        cMapUrl: 'https://unpkg.com/pdfjs-dist@4.10.38/cmaps/',
+        cMapPacked: true,
+      });
+
+      loadingTask.onProgress = (progress) => {
+        if (progress.total > 0 && progressBar) {
+          const pct = Math.min(Math.round((progress.loaded / progress.total) * 100), 95);
+          progressBar.style.width = `${pct}%`;
+          if (loaderText) loaderText.textContent = `Đang tải: ${pct}%`;
+        }
+      };
+
+      const pdf = await loadingTask.promise;
+      const numPages = pdf.numPages;
+      if (totalPagesEl) totalPagesEl.textContent = String(numPages);
+      if (loaderText) loaderText.textContent = `Đang dựng ${numPages} trang...`;
+
+      // Get natural dimensions from page 1
+      const firstPage = await pdf.getPage(1);
+      const initialViewport = firstPage.getViewport({ scale: 1 });
+      const pageWidth = initialViewport.width;
+      const pageHeight = initialViewport.height;
+
+      // Calculate container display dimensions
+      const isMobile = window.innerWidth <= 768;
+      let displayWidth = isMobile ? Math.min(window.innerWidth - 30, 500) : 550;
+      let displayHeight = Math.round((displayWidth / pageWidth) * pageHeight);
+
+      // Render all pages to canvases
+      for (let i = 1; i <= numPages; i++) {
+        const page = await pdf.getPage(i);
+        const pageWrapper = document.createElement('div');
+        pageWrapper.className = 'page-sheet';
+
+        const canvas = document.createElement('canvas');
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const renderViewport = page.getViewport({ scale: (displayWidth / pageWidth) * dpr });
+
+        canvas.width = renderViewport.width;
+        canvas.height = renderViewport.height;
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          await page.render({
+            canvasContext: ctx,
+            viewport: renderViewport,
+          }).promise;
+        }
+
+        pageWrapper.appendChild(canvas);
+        bookContainer?.appendChild(pageWrapper);
+
+        if (progressBar) {
+          const renderPct = 95 + Math.round((i / numPages) * 5);
+          progressBar.style.width = `${renderPct}%`;
+        }
+      }
+
+      // Initialize PageFlip
+      if (bookContainer) {
+        pageFlipInstance = new PageFlip(bookContainer, {
+          width: displayWidth,
+          height: displayHeight,
+          size: isMobile ? 'fixed' : 'stretch',
+          minWidth: 320,
+          maxWidth: 900,
+          minHeight: 400,
+          maxHeight: 1200,
+          drawShadow: true,
+          flippingTime: 700,
+          usePortrait: isMobile,
+          startPage: 0,
+          autoSize: true,
+          maxShadowOpacity: 0.5,
+          showCover: true,
+          mobileScrollSupport: false,
+        });
+
+        pageFlipInstance.loadFromHTML(document.querySelectorAll('.page-sheet'));
+
+        pageFlipInstance.on('flip', (e) => {
+          if (currentPageEl) {
+            const cur = e.data + 1;
+            currentPageEl.textContent = String(cur);
+          }
+        });
+      }
+
+      // Hide loader
+      if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => {
+          loader.style.display = 'none';
+        }, 300);
+      }
+    } catch (err) {
+      console.error('Error loading PDF flipbook:', err);
+      if (loaderText) loaderText.textContent = 'Không thể tải PDF. Vui lòng thử lại.';
+    } finally {
+      isRendering = false;
+    }
+  }
+
+  // Navigation handlers
+  btnPrev?.addEventListener('click', () => pageFlipInstance?.flipPrev());
+  btnNext?.addEventListener('click', () => pageFlipInstance?.flipNext());
+
+  // Keyboard navigation
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') pageFlipInstance?.flipPrev();
+    if (e.key === 'ArrowRight') pageFlipInstance?.flipNext();
+    if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+  });
+
+  // Zoom handlers
+  function applyZoom(scale: number) {
+    currentZoom = Math.max(0.8, Math.min(scale, 1.8));
+    const container = document.getElementById('flipbookContainer');
+    if (container) {
+      container.style.transform = `scale(${currentZoom})`;
+    }
+  }
+
+  btnZoomIn?.addEventListener('click', () => applyZoom(currentZoom + 0.15));
+  btnZoomOut?.addEventListener('click', () => applyZoom(currentZoom - 0.15));
+
+  // Fullscreen handler
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      viewport?.requestFullscreen().catch(err => console.error(err));
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  btnFullscreen?.addEventListener('click', toggleFullscreen);
+
+  // Update download link
+  function updateDownloadLink(lang: string) {
+    if (btnDownload) {
+      const isVi = lang === 'vi';
+      btnDownload.href = isVi ? pdfUrlVi : pdfUrlEn;
+      btnDownload.download = isVi ? 'Catalog-Bach-Thao-Ngan-VI.pdf' : 'Catalog-Bach-Thao-Ngan-EN.pdf';
+    }
+  }
+
+  // Switch language event
+  window.addEventListener('catalog-lang-change', (event: any) => {
+    activeLang = event.detail.lang;
+    updateDownloadLink(activeLang);
+    const targetUrl = activeLang === 'en' ? pdfUrlEn : pdfUrlVi;
+    loadPdfAndRenderBook(targetUrl);
+  });
+
+  // Initial load
+  updateDownloadLink(activeLang);
+  const initialUrl = activeLang === 'en' ? pdfUrlEn : pdfUrlVi;
+  loadPdfAndRenderBook(initialUrl);
+</script>
+
+<style>
+  .flipbook-root {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    background: radial-gradient(circle at center, #1b2838 0%, #0a1118 100%);
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* Loading State */
+  .flipbook-loader {
+    position: absolute;
+    inset: 0;
+    background: #0a1118;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 50;
+    transition: opacity 0.3s ease;
+  }
+
+  .loader-spinner {
+    width: 44px;
+    height: 44px;
+    border: 3px solid rgba(203, 160, 81, 0.2);
+    border-top-color: #cba051;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loader-text {
+    color: #e2e8f0;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .progress-bar-wrap {
+    width: 240px;
+    height: 6px;
+    background: #1e293b;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    width: 10%;
+    background: linear-gradient(90deg, #cba051, #e6c687);
+    border-radius: 3px;
+    transition: width 0.2s ease;
+  }
+
+  /* Viewport */
+  .flipbook-viewport {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1rem 5rem;
+    overflow: hidden;
+  }
+
+  .flipbook-container {
+    transition: transform 0.2s ease;
+    transform-origin: center center;
+  }
+
+  .book-pages {
+    display: none;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  }
+
+  :global(.page-sheet) {
+    background-color: #ffffff;
+    overflow: hidden;
+  }
+
+  :global(.page-sheet canvas) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Controls Toolbar */
+  .flipbook-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(203, 160, 81, 0.3);
+    border-radius: 30px;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
+
+  .control-btn {
+    background: transparent;
+    border: none;
+    color: #f1f5f9;
+    padding: 6px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .control-btn:hover {
+    background: rgba(203, 160, 81, 0.2);
+    color: #cba051;
+  }
+
+  .download-btn {
+    background: rgba(203, 160, 81, 0.15);
+    border: 1px solid rgba(203, 160, 81, 0.3);
+    color: #cba051;
+  }
+
+  .download-btn:hover {
+    background: #cba051;
+    color: #071c25;
+  }
+
+  .page-indicator {
+    color: #cbd5e1;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0 6px;
+    min-width: 60px;
+    text-align: center;
+  }
+
+  .control-divider {
+    width: 1px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 0 2px;
+  }
+
+  @media (max-width: 640px) {
+    .flipbook-controls {
+      bottom: 12px;
+      padding: 4px 8px;
+      gap: 4px;
+      max-width: 95%;
+    }
+
+    .btn-label {
+      display: none;
+    }
+
+    .control-btn {
+      padding: 6px;
+    }
+  }
+</style>
