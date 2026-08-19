@@ -51,6 +51,7 @@ export const site = {
         'catalog Bách Thảo Ngân',
         'ăn gì ở Tuyên Quang',
         'chơi gì ở Tuyên Quang',
+        'công viên nước Tuyên Quang',
         'trung thu Tuyên Quang',
         'Trung thu Thành Tuyên',
         'đặc sản Tuyên Quang',
@@ -59,7 +60,7 @@ export const site = {
       ],
       introHeading: 'Tổ Hợp Nghỉ Dưỡng & Giải Trí Sáng Tạo Bách Thảo Ngân Tuyên Quang',
       intro: [
-        'Bách Thảo Ngân Tuyên Quang là tổ hợp nghỉ dưỡng, ẩm thực và giải trí tọa lạc tại 465 đường Lê Duẩn, phường Minh Xuân, thành phố Tuyên Quang. Khu phức hợp hội tụ lưu trú, trung tâm sự kiện & tiệc cưới, nhà hàng, thể thao và camping – điểm đến lý tưởng khi du lịch Tuyên Quang.',
+        'Bách Thảo Ngân Tuyên Quang là tổ hợp nghỉ dưỡng, ẩm thực và giải trí tọa lạc tại 465 đường Lê Duẩn, phường Minh Xuân, thành phố Tuyên Quang. Khu phức hợp hội tụ khu lưu trú, nhà hàng, công viên nước, trung tâm sự kiện & tiệc cưới, giải trí, thể thao và camping – điểm đến lý tưởng cho gia đình khi du lịch Tuyên Quang.',
         'Bạn đang tìm ăn gì ở Tuyên Quang, chơi gì ở Tuyên Quang hay muốn trải nghiệm Trung thu Thành Tuyên? Xem catalog trực tuyến để khám phá toàn bộ không gian, dịch vụ và đặc sản Bách Thảo Ngân.',
       ],
       faqHeading: 'Câu hỏi thường gặp',
@@ -87,7 +88,7 @@ export const site = {
         {
           question: 'Bách Thảo Ngân có những dịch vụ gì?',
           answer:
-            'Bách Thảo Ngân gồm các dịch vụ chính: lưu trú, trung tâm sự kiện & tiệc cưới, ẩm thực & nhà hàng, giải trí & thể thao và camping – phù hợp cho nghỉ dưỡng gia đình, team building và tổ chức sự kiện.',
+            'Bách Thảo Ngân gồm các dịch vụ chính: khu lưu trú, nhà hàng, công viên nước, trung tâm sự kiện & tiệc cưới, giải trí & thể thao và camping – phù hợp cho nghỉ dưỡng gia đình, vui chơi, team building và tổ chức sự kiện.',
         },
       ],
     },
@@ -103,13 +104,14 @@ export const site = {
         'Tuyen Quang resort',
         'things to do in Tuyen Quang',
         'what to eat in Tuyen Quang',
+        'Tuyen Quang water park',
         'Tuyen Quang travel',
         'Mid-Autumn Festival Tuyen Quang',
         'Thanh Tuyen lantern festival',
       ],
       introHeading: 'Bách Thảo Ngân Tuyên Quang Resort & Entertainment Complex',
       intro: [
-        'Bách Thảo Ngân Tuyên Quang is a resort, dining and entertainment complex located at 465 Lê Duẩn Street, Minh Xuân Ward, Tuyên Quang City. The complex features accommodation, events & weddings, restaurants, sports and camping – an ideal destination for Tuyên Quang travel.',
+        'Bách Thảo Ngân Tuyên Quang is a resort, dining and entertainment complex located at 465 Lê Duẩn Street, Minh Xuân Ward, Tuyên Quang City. The complex features accommodation, restaurants, a water park, events & weddings, entertainment, sports and camping – an ideal destination for families visiting Tuyên Quang.',
         'Looking for what to eat in Tuyên Quang, things to do in Tuyên Quang, or the Thành Tuyên Mid-Autumn lantern festival? Browse the online catalog to explore the spaces, services and local specialties of Bách Thảo Ngân.',
       ],
       faqHeading: 'Frequently Asked Questions',
@@ -137,7 +139,7 @@ export const site = {
         {
           question: 'What services does Bách Thảo Ngân offer?',
           answer:
-            'Main services include accommodation, events & weddings, dining & restaurants, entertainment & sports and camping – suitable for family getaways, team building and event hosting.',
+            'Main services include accommodation, restaurants, a water park, events & weddings, entertainment & sports and camping – suitable for family getaways, fun days out, team building and event hosting.',
         },
       ],
     },
