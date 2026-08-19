@@ -14,9 +14,7 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
-    "astro": "^7.2.3",
-    "page-flip": "^2.0.7",
-    "pdfjs-dist": "^6.2.108"
+    "astro": "^7.2.3"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
