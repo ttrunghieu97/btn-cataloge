@@ -73,45 +73,18 @@
   <div class="footer-bottom">
     <div class="footer-container bottom-container">
       <p>Copyright {new Date().getFullYear()} © <a href="https://bachthaongan.com.vn/" style="color: inherit; text-decoration: underline;">Bách Thảo Ngân</a></p>
-      <div class="visitor-counter" id="visitorCounter">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        <span>Lượt truy cập: <strong id="visitorCount">1</strong></span>
+      <div class="visitor-counter">
+        <img
+          src="https://hits.sh/btn-cataloge.vercel.app.svg?color=cba051&label=L%C6%B0%E1%BB%A3t%20truy%20c%E1%BA%A1p"
+          alt="Lượt truy cập"
+          width="106"
+          height="20"
+          loading="lazy"
+        />
       </div>
     </div>
   </div>
 </footer>
-
-<script>
-  try {
-    const countVal = document.getElementById('visitorCount');
-    const now = Date.now();
-    const lastVisit = parseInt(localStorage.getItem('btn_catalog_last_visit') || '0', 10);
-    let localViews = parseInt(localStorage.getItem('btn_catalog_views') || '1', 10);
-
-    // Chỉ cộng +1 nếu chưa từng ghé hoặc đã quá 24h (tránh F5 tăng liên tục)
-    if (!lastVisit || (now - lastVisit > 86400000)) {
-      localViews = lastVisit ? localViews + 1 : localViews;
-      localStorage.setItem('btn_catalog_views', localViews.toString());
-      localStorage.setItem('btn_catalog_last_visit', now.toString());
-    }
-
-    if (countVal) countVal.textContent = localViews.toLocaleString('vi-VN');
-
-    if (navigator.onLine) {
-      fetch('https://hits.sh/catalog.bachthaongan.com.vn.svg')
-        .then(r => r.text())
-        .then(svg => {
-          const match = svg.match(/<title>hits:\s*([\d,]+)<\/title>/i);
-          if (match && match[1] && countVal) {
-            const onlineHits = parseInt(match[1].replace(/,/g, ''), 10);
-            const total = Math.max(localViews, onlineHits);
-            countVal.textContent = total.toLocaleString('vi-VN');
-          }
-        })
-        .catch(() => {});
-    }
-  } catch (e) {}
-</script>
 
 <style>
   .site-footer {
