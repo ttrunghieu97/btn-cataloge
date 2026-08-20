@@ -5,6 +5,8 @@ interface Props {
 
 const { lang = 'vi' } = Astro.props;
 
+const basePath = lang === 'en' ? '../' : './';
+
 const menuItemsVi = [
   { label: "Trang chủ", href: "https://bachthaongan.com.vn/" },
   { label: "Giới thiệu", href: "https://bachthaongan.com.vn/gioi-thieu/" },
@@ -30,7 +32,7 @@ const menuItemsVi = [
       { label: "Chuyện Bách Thảo Ngân", href: "https://bachthaongan.com.vn/chuyen-bach-thao-ngan/" }
     ]
   },
-  { label: "Catalog", href: "/", active: true },
+  { label: "Catalog", href: `${basePath}index.html`, active: true },
   { label: "Thư viện ảnh", href: "https://bachthaongan.com.vn/thu-vien-anh/" },
   { label: "Cẩm nang du lịch", href: "https://bachthaongan.com.vn/cam-nang-du-lich/" },
   { label: "Liên hệ", href: "https://bachthaongan.com.vn/lien-he/" }
@@ -60,7 +62,7 @@ const menuItemsEn = [
       { label: "Promotions & Hot Combos", href: "https://bachthaongan.com.vn/uu-dai-combo-hot/" }
     ]
   },
-  { label: "Catalog", href: "/en/", active: true },
+  { label: "Catalog", href: `${basePath}en/index.html`, active: true },
   { label: "Gallery", href: "https://bachthaongan.com.vn/thu-vien-anh/" },
   { label: "Travel Guide", href: "https://bachthaongan.com.vn/cam-nang-du-lich/" },
   { label: "Contact", href: "https://bachthaongan.com.vn/lien-he/" }
@@ -73,7 +75,7 @@ const menuItems = lang === 'en' ? menuItemsEn : menuItemsVi;
   <div class="header-container">
     <a href="https://bachthaongan.com.vn/" class="logo-link" title="Bách Thảo Ngân">
       <img
-        src="/logo.png"
+        src={`${basePath}logo.png`}
         alt="Bách Thảo Ngân"
         class="logo-img"
         width="196"
@@ -113,11 +115,11 @@ const menuItems = lang === 'en' ? menuItemsEn : menuItemsVi;
 
       <!-- Language Switcher (Visible on both desktop & mobile) -->
       <div class="lang-switch-group" role="group" aria-label="Ngôn ngữ">
-        <a class={`lang-btn ${lang === 'vi' ? 'active' : ''}`} href="/" lang="vi" title="Tiếng Việt">
+        <a class={`lang-btn ${lang === 'vi' ? 'active' : ''}`} href={`${basePath}index.html`} lang="vi" title="Tiếng Việt">
           <span class="flag">🇻🇳</span> VI
         </a>
         <span class="lang-divider">/</span>
-        <a class={`lang-btn ${lang === 'en' ? 'active' : ''}`} href="/en/" lang="en" title="English">
+        <a class={`lang-btn ${lang === 'en' ? 'active' : ''}`} href={`${basePath}en/index.html`} lang="en" title="English">
           <span class="flag">🇬🇧</span> EN
         </a>
       </div>

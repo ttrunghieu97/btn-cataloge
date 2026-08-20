@@ -6,20 +6,21 @@ interface Props {
 }
 
 const { pdfUrlVi, pdfUrlEn, initialLang = 'vi' } = Astro.props;
+const basePath = initialLang === 'en' ? '../' : './';
 const totalPages = 18;
 const pages = Array.from({ length: totalPages }, (_, i) => {
   const num = String(i + 1).padStart(2, '0');
   return {
     num: i + 1,
-    viSrc: `/catalog/vi/page-${num}.webp`,
-    enSrc: `/catalog/en/page-${num}.webp`,
-    viSrcset: `/catalog/vi/page-${num}-960.webp 960w, /catalog/vi/page-${num}-1440.webp 1440w, /catalog/vi/page-${num}.webp 2280w`,
-    enSrcset: `/catalog/en/page-${num}-960.webp 960w, /catalog/en/page-${num}-1440.webp 1440w, /catalog/en/page-${num}.webp 2280w`,
+    viSrc: `${basePath}catalog/vi/page-${num}.webp`,
+    enSrc: `${basePath}catalog/en/page-${num}.webp`,
+    viSrcset: `${basePath}catalog/vi/page-${num}-960.webp 960w, ${basePath}catalog/vi/page-${num}-1440.webp 1440w, ${basePath}catalog/vi/page-${num}.webp 2280w`,
+    enSrcset: `${basePath}catalog/en/page-${num}-960.webp 960w, ${basePath}catalog/en/page-${num}-1440.webp 1440w, ${basePath}catalog/en/page-${num}.webp 2280w`,
   };
 });
 ---
 
-<div class="pdf-viewer-root" id="pdfViewerRoot" data-lang={initialLang} data-pdf-vi={pdfUrlVi} data-pdf-en={pdfUrlEn}>
+<div class="pdf-viewer-root" id="pdfViewerRoot" data-lang={initialLang} data-base-path={basePath} data-pdf-vi={pdfUrlVi || `${basePath}pdf/catalog-vi.pdf`} data-pdf-en={pdfUrlEn || `${basePath}pdf/catalog-en.pdf`}>
   <!-- Top Utility Bar -->
   <div class="pdf-toolbar">
     <div class="toolbar-inner">
@@ -191,7 +192,8 @@ const pages = Array.from({ length: totalPages }, (_, i) => {
 
   function initAudio() {
     if (!bgAudio) {
-      bgAudio = new Audio('/bg-music.mp3');
+      const bPath = root?.getAttribute('data-base-path') || './';
+      bgAudio = new Audio(bPath + 'bg-music.mp3');
       bgAudio.loop = true;
       bgAudio.volume = 0.3;
     }

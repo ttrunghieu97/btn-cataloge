@@ -91,7 +91,7 @@ const structuredData = JSON.stringify({
 
     {lang === 'vi' && (
       <script is:inline>
-        new URLSearchParams(location.search).get('lang') === 'en' && location.replace('/en/');
+        new URLSearchParams(location.search).get('lang') === 'en' && location.replace('./en/index.html');
       </script>
     )}
 

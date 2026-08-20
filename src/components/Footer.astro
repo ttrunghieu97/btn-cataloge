@@ -69,13 +69,49 @@
     </div>
   </div>
 
-  <!-- Copyright -->
+  <!-- Copyright & Visitor Counter -->
   <div class="footer-bottom">
-    <div class="footer-container">
+    <div class="footer-container bottom-container">
       <p>Copyright {new Date().getFullYear()} © <a href="https://bachthaongan.com.vn/" style="color: inherit; text-decoration: underline;">Bách Thảo Ngân</a></p>
+      <div class="visitor-counter" id="visitorCounter">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>Lượt truy cập: <strong id="visitorCount">1</strong></span>
+      </div>
     </div>
   </div>
 </footer>
+
+<script>
+  try {
+    const countVal = document.getElementById('visitorCount');
+    const now = Date.now();
+    const lastVisit = parseInt(localStorage.getItem('btn_catalog_last_visit') || '0', 10);
+    let localViews = parseInt(localStorage.getItem('btn_catalog_views') || '1', 10);
+
+    // Chỉ cộng +1 nếu chưa từng ghé hoặc đã quá 24h (tránh F5 tăng liên tục)
+    if (!lastVisit || (now - lastVisit > 86400000)) {
+      localViews = lastVisit ? localViews + 1 : localViews;
+      localStorage.setItem('btn_catalog_views', localViews.toString());
+      localStorage.setItem('btn_catalog_last_visit', now.toString());
+    }
+
+    if (countVal) countVal.textContent = localViews.toLocaleString('vi-VN');
+
+    if (navigator.onLine) {
+      fetch('https://hits.sh/catalog.bachthaongan.com.vn.svg')
+        .then(r => r.text())
+        .then(svg => {
+          const match = svg.match(/<title>hits:\s*([\d,]+)<\/title>/i);
+          if (match && match[1] && countVal) {
+            const onlineHits = parseInt(match[1].replace(/,/g, ''), 10);
+            const total = Math.max(localViews, onlineHits);
+            countVal.textContent = total.toLocaleString('vi-VN');
+          }
+        })
+        .catch(() => {});
+    }
+  } catch (e) {}
+</script>
 
 <style>
   .site-footer {
@@ -213,6 +249,30 @@
     margin: 0;
     font-size: 0.85rem;
     color: #94a3b8;
+  }
+
+  .bottom-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .visitor-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(203, 160, 81, 0.15);
+    border: 1px solid rgba(203, 160, 81, 0.35);
+    color: #cba051;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+  }
+
+  .visitor-counter strong {
+    color: #ffffff;
   }
 
   @media (max-width: 1024px) {
