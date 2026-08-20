@@ -212,19 +212,23 @@ const pages = Array.from({ length: totalPages }, (_, i) => {
 
   btnMusic?.addEventListener('click', toggleMusic);
 
-  // Auto-play on first user interaction
-  const interactionEvents = ['click', 'scroll', 'touchstart', 'keydown'] as const;
-  function onFirstInteraction() {
-    if (!musicPlaying) startMusic();
-    interactionEvents.forEach(evt => window.removeEventListener(evt, onFirstInteraction, { capture: true } as any));
-  }
-  interactionEvents.forEach(evt => window.addEventListener(evt, onFirstInteraction, { capture: true, once: false, passive: true } as any));
+  // Autoplay attempt on load (succeeds for repeat visitors / browsers with
+  // autoplay enabled — no user gesture needed)
+  initAudio().play().then(() => setMusicUI(true)).catch(() => {});
 
-  // Try autoplay immediately (works if user has interacted with domain before)
-  initAudio().play().then(() => {
-    setMusicUI(true);
-    interactionEvents.forEach(evt => window.removeEventListener(evt, onFirstInteraction, { capture: true } as any));
-  }).catch(() => {});
+  // First user gesture (scroll/tap/click/key) starts music. This is required
+  // by the browser autoplay policy: audio with sound needs a user activation.
+  function startMusicOnGesture() {
+    if (!musicPlaying) startMusic();
+  }
+  const gestureEvents: (keyof WindowEventMap)[] = ['pointerdown', 'keydown', 'scroll', 'touchstart'];
+  gestureEvents.forEach((evt) => {
+    const handler = () => {
+      startMusicOnGesture();
+      gestureEvents.forEach((e) => window.removeEventListener(e, handler));
+    };
+    window.addEventListener(evt, handler, { once: true });
+  });
 
   // Keyboard shortcut: M
   window.addEventListener('keydown', (e) => {
