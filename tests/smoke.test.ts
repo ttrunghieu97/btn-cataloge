@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 const ROOT = resolve(import.meta.dirname, '..');
 const PUBLIC = resolve(ROOT, 'public');
 const DIST = resolve(ROOT, 'dist');
+const PDF_VIEWER = resolve(ROOT, 'src/components/PdfViewer.astro');
 
 const TOTAL_PAGES = 18;
 const LANGS = ['vi', 'en'] as const;
@@ -58,6 +59,15 @@ describe('SEO config', () => {
       expect(seo.pageDesc, `${lang} pageDesc`).toBeTruthy();
       expect(seo.keywords.length, `${lang} keywords`).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('Background music', () => {
+  test('attempts autoplay and respects a manual pause', () => {
+    const source = readFileSync(PDF_VIEWER, 'utf-8');
+    expect(source).toContain('let musicManuallyPaused = false;');
+    expect(source).toContain("initAudio().play().then(() => setMusicUI(true)).catch(() => {});");
+    expect(source).toContain('if (musicPlaying || musicManuallyPaused) return;');
   });
 });
 

@@ -187,6 +187,7 @@ const pages = Array.from({ length: totalPages }, (_, i) => {
   const iconMusicOff = document.getElementById('iconMusicOff');
   let bgAudio: HTMLAudioElement | null = null;
   let musicPlaying = false;
+  let musicManuallyPaused = false;
 
   function initAudio() {
     if (!bgAudio) {
@@ -214,14 +215,30 @@ const pages = Array.from({ length: totalPages }, (_, i) => {
     const audio = initAudio();
     if (musicPlaying) {
       audio.pause();
+      musicManuallyPaused = true;
       setMusicUI(false);
     } else {
+      musicManuallyPaused = false;
       startMusic();
     }
   }
 
   btnMusic?.addEventListener('click', toggleMusic);
 
+  initAudio().play().then(() => setMusicUI(true)).catch(() => {});
+
+  function tryStartMusic() {
+    if (musicPlaying || musicManuallyPaused) return;
+    initAudio().play().then(() => setMusicUI(true)).catch(() => {});
+  }
+  const gestureEvents: (keyof WindowEventMap)[] = ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown'];
+  const onGesture = () => {
+    tryStartMusic();
+    if (musicPlaying) {
+      gestureEvents.forEach((evt) => window.removeEventListener(evt, onGesture));
+    }
+  };
+  gestureEvents.forEach((evt) => window.addEventListener(evt, onGesture, { capture: true, passive: true }));
 
 
   // Keyboard shortcut: M
