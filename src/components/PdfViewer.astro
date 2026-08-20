@@ -13,6 +13,8 @@ const pages = Array.from({ length: totalPages }, (_, i) => {
     num: i + 1,
     viSrc: `/catalog/vi/page-${num}.webp`,
     enSrc: `/catalog/en/page-${num}.webp`,
+    viSrcset: `/catalog/vi/page-${num}-960.webp 960w, /catalog/vi/page-${num}-1440.webp 1440w, /catalog/vi/page-${num}.webp 2280w`,
+    enSrcset: `/catalog/en/page-${num}-960.webp 960w, /catalog/en/page-${num}-1440.webp 1440w, /catalog/en/page-${num}.webp 2280w`,
   };
 });
 ---
@@ -57,8 +59,12 @@ const pages = Array.from({ length: totalPages }, (_, i) => {
           <img
             class="catalog-page-img"
             src={initialLang === 'vi' ? p.viSrc : p.enSrc}
+            srcset={initialLang === 'vi' ? p.viSrcset : p.enSrcset}
+            sizes="(min-width: 1160px) 1140px, calc(100vw - 1rem)"
             data-vi-src={p.viSrc}
             data-en-src={p.enSrc}
+            data-vi-srcset={p.viSrcset}
+            data-en-srcset={p.enSrcset}
             alt={`Trang ${p.num} - Bách Thảo Ngân Catalog`}
             loading={p.num <= 2 ? 'eager' : 'lazy'}
             fetchpriority={p.num === 1 ? 'high' : 'auto'}
@@ -161,6 +167,10 @@ const pages = Array.from({ length: totalPages }, (_, i) => {
 
     pageImages.forEach((img) => {
       const targetSrc = isEn ? img.getAttribute('data-en-src') : img.getAttribute('data-vi-src');
+      const targetSrcset = isEn ? img.getAttribute('data-en-srcset') : img.getAttribute('data-vi-srcset');
+      if (targetSrcset) {
+        img.srcset = targetSrcset;
+      }
       if (targetSrc && img.src !== targetSrc) {
         img.src = targetSrc;
       }
@@ -177,7 +187,6 @@ const pages = Array.from({ length: totalPages }, (_, i) => {
   const iconMusicOff = document.getElementById('iconMusicOff');
   let bgAudio: HTMLAudioElement | null = null;
   let musicPlaying = false;
-  let musicManuallyPaused = false;
 
   function initAudio() {
     if (!bgAudio) {
@@ -205,37 +214,15 @@ const pages = Array.from({ length: totalPages }, (_, i) => {
     const audio = initAudio();
     if (musicPlaying) {
       audio.pause();
-      musicManuallyPaused = true;
       setMusicUI(false);
     } else {
-      musicManuallyPaused = false;
       startMusic();
     }
   }
 
   btnMusic?.addEventListener('click', toggleMusic);
 
-  // Autoplay attempt on load (succeeds for repeat visitors / browsers with
-  // autoplay enabled — no user gesture needed)
-  initAudio().play().then(() => setMusicUI(true)).catch(() => {});
 
-  // First user gesture starts music. Browser autoplay policy requires a user
-  // activation for audio with sound. Note: `scroll`/`touchstart` do NOT count
-  // as activation on iOS Safari, so use touchend/pointerdown/click/keydown.
-  // Listeners are only removed once music actually plays — a rejected play()
-  // attempt (e.g. iOS scroll) must not consume them.
-  function tryStartMusic() {
-    if (musicPlaying || musicManuallyPaused) return;
-    initAudio().play().then(() => setMusicUI(true)).catch(() => {});
-  }
-  const gestureEvents: (keyof WindowEventMap)[] = ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown'];
-  const onGesture = () => {
-    tryStartMusic();
-    if (musicPlaying) {
-      gestureEvents.forEach((evt) => window.removeEventListener(evt, onGesture));
-    }
-  };
-  gestureEvents.forEach((evt) => window.addEventListener(evt, onGesture, { capture: true, passive: true }));
 
   // Keyboard shortcut: M
   window.addEventListener('keydown', (e) => {

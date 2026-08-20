@@ -4,3 +4,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://bachthaongan.com.vn; frame-src https://www.google.com; connect-src 'self' https://cloudflareinsights.com; media-src 'self'; base-uri 'self'; form-action 'self'
+
+/catalog/*
+  Cache-Control: public, max-age=86400
