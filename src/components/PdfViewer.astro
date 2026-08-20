@@ -177,6 +177,7 @@ const pages = Array.from({ length: totalPages }, (_, i) => {
   const iconMusicOff = document.getElementById('iconMusicOff');
   let bgAudio: HTMLAudioElement | null = null;
   let musicPlaying = false;
+  let musicManuallyPaused = false;
 
   function initAudio() {
     if (!bgAudio) {
@@ -204,8 +205,10 @@ const pages = Array.from({ length: totalPages }, (_, i) => {
     const audio = initAudio();
     if (musicPlaying) {
       audio.pause();
+      musicManuallyPaused = true;
       setMusicUI(false);
     } else {
+      musicManuallyPaused = false;
       startMusic();
     }
   }
@@ -222,10 +225,10 @@ const pages = Array.from({ length: totalPages }, (_, i) => {
   // Listeners are only removed once music actually plays — a rejected play()
   // attempt (e.g. iOS scroll) must not consume them.
   function tryStartMusic() {
-    if (musicPlaying) return;
+    if (musicPlaying || musicManuallyPaused) return;
     initAudio().play().then(() => setMusicUI(true)).catch(() => {});
   }
-  const gestureEvents: (keyof WindowEventMap)[] = ['pointerdown', 'touchend', 'click', 'keydown'];
+  const gestureEvents: (keyof WindowEventMap)[] = ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown'];
   const onGesture = () => {
     tryStartMusic();
     if (musicPlaying) {
