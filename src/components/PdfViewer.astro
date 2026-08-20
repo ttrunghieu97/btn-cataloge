@@ -216,19 +216,23 @@ const pages = Array.from({ length: totalPages }, (_, i) => {
   // autoplay enabled — no user gesture needed)
   initAudio().play().then(() => setMusicUI(true)).catch(() => {});
 
-  // First user gesture (scroll/tap/click/key) starts music. This is required
-  // by the browser autoplay policy: audio with sound needs a user activation.
-  function startMusicOnGesture() {
-    if (!musicPlaying) startMusic();
+  // First user gesture starts music. Browser autoplay policy requires a user
+  // activation for audio with sound. Note: `scroll`/`touchstart` do NOT count
+  // as activation on iOS Safari, so use touchend/pointerdown/click/keydown.
+  // Listeners are only removed once music actually plays — a rejected play()
+  // attempt (e.g. iOS scroll) must not consume them.
+  function tryStartMusic() {
+    if (musicPlaying) return;
+    initAudio().play().then(() => setMusicUI(true)).catch(() => {});
   }
-  const gestureEvents: (keyof WindowEventMap)[] = ['pointerdown', 'keydown', 'scroll', 'touchstart'];
-  gestureEvents.forEach((evt) => {
-    const handler = () => {
-      startMusicOnGesture();
-      gestureEvents.forEach((e) => window.removeEventListener(e, handler));
-    };
-    window.addEventListener(evt, handler, { once: true });
-  });
+  const gestureEvents: (keyof WindowEventMap)[] = ['pointerdown', 'touchend', 'click', 'keydown'];
+  const onGesture = () => {
+    tryStartMusic();
+    if (musicPlaying) {
+      gestureEvents.forEach((evt) => window.removeEventListener(evt, onGesture));
+    }
+  };
+  gestureEvents.forEach((evt) => window.addEventListener(evt, onGesture, { capture: true, passive: true }));
 
   // Keyboard shortcut: M
   window.addEventListener('keydown', (e) => {
