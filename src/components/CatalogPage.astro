@@ -103,6 +103,10 @@ const structuredData = JSON.stringify({
     <script is:inline type="application/ld+json" set:html={structuredData}></script>
   </head>
   <body>
+    <audio id="background-music" autoplay loop preload="auto" aria-hidden="true">
+      <source src="/bg-music.mp3" type="audio/mpeg" />
+    </audio>
+
     <Header lang={lang} />
 
     <main class="main-content">
@@ -114,6 +118,19 @@ const structuredData = JSON.stringify({
     </main>
 
     <Footer />
+
+    <script is:inline>
+      const backgroundMusic = document.querySelector('#background-music');
+
+      const playBackgroundMusic = () => {
+        backgroundMusic?.play().catch(() => {
+          document.addEventListener('pointerdown', playBackgroundMusic, { once: true });
+          document.addEventListener('keydown', playBackgroundMusic, { once: true });
+        });
+      };
+
+      playBackgroundMusic();
+    </script>
   </body>
 </html>
 
